@@ -3,307 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DeltaRDT — Remote Desktop for Everyone</title>
+<title>DeltaRDT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;700;900&family=Barlow+Condensed:wght@700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --ink:#0d0f14;--ink2:#161a23;--ink3:#1e2330;--ink4:#252d3a;
-  --steel:#2c3447;--dim:#4a576e;--mute:#7a8ba8;--fog:#a8b8d0;
-  --light:#d8e4f0;--white:#ffffff;
-  --cyan:#00e5ff;--cyan2:#00b8d9;--lime:#aaff00;--amber:#ffaa00;--red:#ff3860;--green:#00e5a0;
-  --mono:'DM Mono',monospace;--head:'Barlow Condensed',sans-serif;--body:'Barlow',sans-serif;
-  --r:8px;--tr:180ms cubic-bezier(.4,0,.2,1);
-}
-html{scroll-behavior:smooth}
-body{background:var(--ink);color:var(--light);font-family:var(--body);font-size:16px;line-height:1.6;overflow-x:hidden}
-body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.022;pointer-events:none;z-index:9999}
-
-/* ═══ NAV ═══ */
-nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;padding:0 48px;height:60px;background:rgba(13,15,20,.9);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06)}
-.nav-logo{font-family:var(--head);font-weight:900;font-size:22px;letter-spacing:1px;color:var(--white);text-decoration:none;display:flex;align-items:center;gap:9px}
-.nav-logo-mark{width:28px;height:28px;background:var(--cyan);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:var(--ink);font-weight:900}
-.nav-logo span{color:var(--cyan)}
-nav ul{display:flex;gap:28px;list-style:none;margin-left:auto;margin-right:28px}
-nav ul a{font-size:12px;font-weight:600;letter-spacing:.8px;color:var(--mute);text-decoration:none;text-transform:uppercase;transition:color var(--tr)}
-nav ul a:hover{color:var(--white)}
-nav ul a.active{color:var(--cyan)}
-.nav-cta{padding:8px 18px;background:var(--cyan);color:var(--ink);border-radius:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;transition:all var(--tr);border:none;cursor:pointer}
-.nav-cta:hover{background:var(--cyan2);transform:translateY(-1px)}
-@media(max-width:900px){nav{padding:0 20px}nav ul{display:none}}
-
-/* ═══ PAGE SECTIONS (single-page) ═══ */
-.page{display:none;min-height:100vh;padding-top:60px}
-.page.active{display:block}
-
-/* ═══ HERO ═══ */
-#p-home{display:block}
-#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 48px 80px;position:relative;overflow:hidden}
-#hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,229,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.055) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,black 30%,transparent 100%)}
-#hero::after{content:'';position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(0,229,255,.1) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-58%);pointer-events:none}
-.hero-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;margin-bottom:24px;position:relative;display:flex;align-items:center;gap:12px}
-.hero-eyebrow::before,.hero-eyebrow::after{content:'';display:block;width:40px;height:1px;background:var(--cyan);opacity:.5}
-h1{font-family:var(--head);font-weight:900;font-size:clamp(54px,8vw,108px);line-height:.93;letter-spacing:-1px;color:var(--white);position:relative;margin-bottom:8px}
-h1 .acc{color:var(--cyan)}
-h1 .faded{color:var(--steel)}
-.hero-sub{font-size:clamp(15px,2vw,19px);font-weight:300;color:var(--mute);max-width:520px;margin:24px auto 48px;position:relative;line-height:1.75}
-.hero-sub strong{color:var(--fog);font-weight:600}
-.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;position:relative}
-.btn-p{display:inline-flex;align-items:center;gap:9px;padding:15px 30px;background:var(--cyan);color:var(--ink);font-family:var(--body);font-weight:700;font-size:14px;border-radius:var(--r);text-decoration:none;border:none;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
-.btn-p:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,229,255,.28)}
-.btn-s{display:inline-flex;align-items:center;gap:9px;padding:15px 30px;background:transparent;color:var(--light);font-family:var(--body);font-weight:600;font-size:14px;border-radius:var(--r);text-decoration:none;border:1px solid var(--steel);transition:all .2s;cursor:pointer}
-.btn-s:hover{background:var(--ink3);border-color:var(--dim);color:var(--white)}
-.os-badges{display:flex;gap:10px;justify-content:center;margin-top:24px;flex-wrap:wrap;position:relative}
-.os-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;font-family:var(--mono);font-size:11px;color:var(--mute)}
-.os-dot{width:6px;height:6px;border-radius:50%;background:var(--lime)}
-
-/* Stats */
-#stats{display:flex;justify-content:center;border-top:1px solid var(--steel);border-bottom:1px solid var(--steel);background:var(--ink2)}
-.stat{flex:1;max-width:200px;padding:24px 20px;text-align:center;border-right:1px solid var(--steel)}
-.stat:last-child{border-right:none}
-.stat-num{font-family:var(--head);font-weight:900;font-size:38px;color:var(--cyan);line-height:1;margin-bottom:4px}
-.stat-lbl{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
-
-/* ═══ SHARED SECTION STYLES ═══ */
-.section{padding:88px 48px;max-width:1120px;margin:0 auto}
-.section-full{padding:88px 0;background:var(--ink2)}
-.section-full .inner{max-width:1120px;margin:0 auto;padding:0 48px}
-.s-label{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;margin-bottom:14px}
-h2{font-family:var(--head);font-weight:900;font-size:clamp(34px,5vw,58px);line-height:1;color:var(--white);letter-spacing:-.5px;margin-bottom:14px}
-h2 .acc{color:var(--cyan)}
-.s-intro{font-size:17px;font-weight:300;color:var(--mute);max-width:520px;line-height:1.75}
-@media(max-width:768px){.section{padding:64px 24px}.section-full .inner{padding:0 24px}}
-
-/* ═══ HOW IT WORKS ═══ */
-.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:56px;background:var(--steel);border:1px solid var(--steel);border-radius:14px;overflow:hidden}
-.how-step{background:var(--ink2);padding:36px 30px;position:relative;overflow:hidden;transition:background .2s}
-.how-step:hover{background:var(--ink3)}
-.how-step::before{content:attr(data-n);position:absolute;top:-12px;right:12px;font-family:var(--head);font-weight:900;font-size:110px;color:rgba(255,255,255,.025);line-height:1;pointer-events:none}
-.how-icon{width:44px;height:44px;background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.2);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:18px}
-.how-step h3{font-family:var(--head);font-weight:700;font-size:21px;color:var(--white);margin-bottom:8px}
-.how-step p{font-size:14px;color:var(--mute);line-height:1.7}
-.role-tag{display:inline-block;margin-top:14px;font-family:var(--mono);font-size:10px;letter-spacing:1px;padding:3px 9px;border-radius:4px;border:1px solid}
-.tag-host{color:var(--cyan);border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.06)}
-.tag-view{color:var(--lime);border-color:rgba(170,255,0,.3);background:rgba(170,255,0,.06)}
-.tag-both{color:var(--amber);border-color:rgba(255,170,0,.3);background:rgba(255,170,0,.06)}
-@media(max-width:768px){.how-grid{grid-template-columns:1fr}}
-
-/* ═══ DOWNLOAD ═══ */
-.dl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:52px}
-.dl-card{background:var(--ink2);border:1px solid var(--steel);border-radius:14px;padding:32px 26px;position:relative;overflow:hidden;cursor:pointer;transition:all .22s}
-.dl-card::after{content:'';position:absolute;inset:-1px;border-radius:14px;border:1px solid var(--cyan);opacity:0;transition:opacity .22s}
-.dl-card:hover{background:var(--ink3);transform:translateY(-3px);box-shadow:0 16px 48px rgba(0,0,0,.4)}
-.dl-card:hover::after{opacity:1}
-.dl-card.feat{border-color:rgba(0,229,255,.25);background:rgba(0,229,255,.035)}
-.dl-card.feat::before{content:'RECOMMENDED';position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--cyan);background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.2);padding:3px 8px;border-radius:4px}
-.dl-os-icon{font-size:38px;margin-bottom:14px;display:block}
-.dl-name{font-family:var(--head);font-weight:700;font-size:26px;color:var(--white);margin-bottom:6px}
-.dl-desc{font-size:13px;color:var(--dim);margin-bottom:20px;line-height:1.6}
-.dl-ver{font-family:var(--mono);font-size:11px;color:var(--mute);margin-bottom:18px}
-.dl-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:11px 14px;background:var(--ink3);border:1px solid var(--steel);border-radius:7px;color:var(--light);font-weight:600;font-size:13px;cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:7px}
-.dl-btn:hover{background:var(--steel);color:var(--white)}
-.dl-card.feat .dl-btn:first-of-type{background:var(--cyan);color:var(--ink);border-color:var(--cyan);font-weight:700}
-.dl-card.feat .dl-btn:first-of-type:hover{background:var(--cyan2)}
-.dl-sz{font-family:var(--mono);font-size:11px;opacity:.6}
-@media(max-width:768px){.dl-grid{grid-template-columns:1fr}}
-
-/* ═══ SETUP GUIDE ═══ */
-.setup-tabs{display:flex;gap:0;margin-top:44px;border:1px solid var(--steel);border-radius:11px;overflow:hidden;background:var(--ink)}
-.tab-btn{flex:1;padding:13px 16px;background:transparent;border:none;border-right:1px solid var(--steel);font-family:var(--body);font-weight:600;font-size:12px;color:var(--dim);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px;text-transform:uppercase;letter-spacing:.5px}
-.tab-btn:last-child{border-right:none}
-.tab-btn:hover{background:var(--ink2);color:var(--light)}
-.tab-btn.on{background:var(--ink2);color:var(--cyan);border-bottom:2px solid var(--cyan)}
-.tab-content{display:none;padding-top:32px}
-.tab-content.on{display:block}
-.setup-steps{display:flex;flex-direction:column;gap:0}
-.ss{display:flex;gap:22px;padding:28px 0;border-bottom:1px solid var(--steel);opacity:0;transform:translateY(10px);transition:opacity .4s,transform .4s}
-.ss.vis{opacity:1;transform:none}
-.ss:last-child{border-bottom:none}
-.ss-num{width:34px;height:34px;border-radius:50%;background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:var(--cyan);flex-shrink:0;margin-top:2px}
-.ss-body{flex:1}
-.ss-body h4{font-family:var(--head);font-weight:700;font-size:19px;color:var(--white);margin-bottom:7px}
-.ss-body p{font-size:14px;color:var(--mute);line-height:1.75;margin-bottom:10px}
-.ss-body p strong{color:var(--fog)}
-.ss-body p:last-child{margin-bottom:0}
-.code-block{background:var(--ink);border:1px solid var(--steel);border-left:3px solid var(--cyan);border-radius:6px;padding:13px 15px;font-family:var(--mono);font-size:12px;color:var(--fog);position:relative;overflow-x:auto;margin:8px 0}
-.code-block .cm{color:var(--dim)}
-.code-block .kw{color:var(--cyan)}
-.code-block .st{color:var(--lime)}
-.copy-btn{position:absolute;top:8px;right:8px;padding:3px 9px;background:var(--steel);border:none;border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--mute);cursor:pointer;transition:all .15s}
-.copy-btn:hover{background:var(--dim);color:var(--white)}
-.copy-btn.ok{color:var(--lime)}
-.info-box{display:flex;gap:11px;padding:13px 15px;border-radius:8px;background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.14);margin:10px 0}
-.info-box.warn{background:rgba(255,170,0,.05);border-color:rgba(255,170,0,.2)}
-.info-box.ok{background:rgba(0,229,160,.05);border-color:rgba(0,229,160,.2)}
-.ib-icon{font-size:15px;flex-shrink:0;margin-top:1px}
-.ib-text{font-size:13px;color:var(--fog);line-height:1.7}
-.ib-text code{font-family:var(--mono);background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-size:11px}
-@media(max-width:700px){.setup-tabs{flex-direction:column}.tab-btn{border-right:none;border-bottom:1px solid var(--steel)}}
-
-/* ═══ FEATURES ═══ */
-.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:52px}
-.feat{padding:26px;background:var(--ink2);border:1px solid var(--steel);border-radius:11px;transition:all .2s}
-.feat:hover{background:var(--ink3);border-color:var(--dim);transform:translateY(-2px)}
-.feat-icon{font-size:26px;margin-bottom:13px;display:block}
-.feat h3{font-family:var(--head);font-weight:700;font-size:17px;color:var(--white);margin-bottom:7px}
-.feat p{font-size:13px;color:var(--dim);line-height:1.7}
-@media(max-width:768px){.feat-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:500px){.feat-grid{grid-template-columns:1fr}}
-
-/* ═══ FAQ ═══ */
-.faq-item{border-bottom:1px solid var(--steel)}
-.faq-q{display:flex;align-items:center;justify-content:space-between;padding:18px 0;cursor:pointer;font-weight:600;font-size:15px;color:var(--light);transition:color .15s;gap:14px;border:none;background:none;width:100%;text-align:left}
-.faq-q:hover{color:var(--white)}
-.faq-chev{width:20px;height:20px;flex-shrink:0;border:1px solid var(--steel);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--mute);transition:transform .2s}
-.faq-item.open .faq-chev{transform:rotate(180deg);color:var(--cyan);border-color:var(--cyan)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
-.faq-item.open .faq-a{max-height:240px;padding-bottom:18px}
-.faq-a p{font-size:14px;color:var(--mute);line-height:1.8}
-.faq-a a{color:var(--cyan);text-decoration:none}
-
-/* ═══ REMOTE VIEWER PAGE ═══ */
-#p-remote{padding-top:60px}
-#viewer-shell{display:grid;grid-template-columns:300px 1fr;grid-template-rows:52px 1fr;height:calc(100vh - 60px);grid-template-areas:"vbar vbar" "vsidebar vmain"}
-
-/* viewer topbar */
-#vbar{grid-area:vbar;display:flex;align-items:center;gap:14px;padding:0 18px;background:var(--ink2);border-bottom:1px solid var(--steel);flex-shrink:0}
-.vbar-logo{font-family:var(--head);font-weight:900;font-size:16px;color:var(--white);display:flex;align-items:center;gap:7px}
-.vbar-logo span{color:var(--cyan)}
-.vbar-sep{width:1px;height:20px;background:var(--steel)}
-.vbar-info{font-family:var(--mono);font-size:11px;color:var(--dim)}
-#vpill{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--mute);padding:4px 11px;border:1px solid var(--steel);border-radius:20px;background:var(--ink3)}
-#vdot{width:7px;height:7px;border-radius:50%;background:var(--dim);transition:background var(--tr)}
-#vdot.conn{background:var(--green);box-shadow:0 0 6px var(--green)}
-#vdot.ing{background:var(--amber);animation:blink 1s infinite}
-#vdot.err{background:var(--red)}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-
-/* viewer sidebar */
-#vsidebar{grid-area:vsidebar;background:var(--ink2);border-right:1px solid var(--steel);display:flex;flex-direction:column;overflow:hidden}
-.vs-sec{padding:14px 16px 8px;font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--steel)}
-#vconn-panel{padding:14px}
-.vf label{display:block;font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:4px}
-.vf{margin-bottom:10px}
-.vf input{width:100%;background:var(--ink3);border:1px solid var(--steel);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12px;color:var(--white);outline:none;transition:border-color var(--tr)}
-.vf input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,229,255,.1)}
-.vf input::placeholder{color:var(--dim)}
-.vf-row{display:flex;gap:8px}
-.vf-row .vf{flex:1}
-#vbtn-connect{width:100%;padding:10px;background:linear-gradient(135deg,var(--cyan),var(--cyan2));border:none;border-radius:7px;font-family:var(--body);font-weight:700;font-size:13px;color:var(--ink);cursor:pointer;transition:all .2s;margin-top:2px}
-#vbtn-connect:hover{opacity:.88;transform:translateY(-1px)}
-#vbtn-connect:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.recent-list{flex:1;overflow-y:auto;padding:8px}
-.recent-list::-webkit-scrollbar{width:3px}
-.recent-list::-webkit-scrollbar-thumb{background:var(--steel);border-radius:2px}
-.rec-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;cursor:pointer;transition:background var(--tr);border:1px solid transparent}
-.rec-item:hover{background:var(--ink3);border-color:var(--steel)}
-.rec-icon{width:30px;height:30px;background:var(--ink3);border:1px solid var(--steel);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.rec-meta{flex:1;min-width:0}
-.rec-name{font-size:12px;font-weight:600;color:var(--fog);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rec-addr{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:1px}
-.vs-toolbar{padding:10px 14px;border-top:1px solid var(--steel);display:flex;gap:7px}
-.vs-tool{flex:1;padding:7px;background:var(--ink3);border:1px solid var(--steel);border-radius:6px;font-family:var(--mono);font-size:10px;color:var(--mute);cursor:pointer;text-align:center;transition:all var(--tr)}
-.vs-tool:hover{background:var(--ink4);color:var(--light);border-color:var(--dim)}
-
-/* viewer main canvas area */
-#vmain{grid-area:vmain;display:flex;flex-direction:column;background:var(--ink);overflow:hidden}
-#vtoolbar{display:flex;align-items:center;gap:8px;padding:7px 14px;background:var(--ink2);border-bottom:1px solid var(--steel);flex-shrink:0;flex-wrap:wrap}
-#vsess-label{font-weight:700;color:var(--white);font-size:13px}
-#vsess-detail{font-family:var(--mono);font-size:11px;color:var(--mute)}
-.vt-sep{width:1px;height:15px;background:var(--steel)}
-.vt-btn{padding:5px 10px;background:transparent;border:1px solid var(--steel);border-radius:6px;font-family:var(--mono);font-size:11px;color:var(--mute);cursor:pointer;transition:all var(--tr);display:flex;align-items:center;gap:5px}
-.vt-btn:hover{background:var(--ink3);color:var(--light);border-color:var(--dim)}
-.vt-btn.danger:hover{background:rgba(255,56,96,.1);color:var(--red);border-color:var(--red)}
-#vquality{background:var(--ink3);border:1px solid var(--steel);border-radius:6px;padding:5px 8px;font-family:var(--mono);font-size:11px;color:var(--mute);cursor:pointer;outline:none}
-.vt-space{flex:1}
-#vfps{font-family:var(--mono);font-size:10px;color:var(--dim);padding:4px 8px;background:var(--ink3);border:1px solid var(--steel);border-radius:5px}
-#vlatency{font-family:var(--mono);font-size:10px;color:var(--dim);padding:4px 8px;background:var(--ink3);border:1px solid var(--steel);border-radius:5px}
-
-/* canvas wrap */
-#vcanvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;position:relative;background:radial-gradient(ellipse at 30% 20%,rgba(124,77,255,.05) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(0,212,255,.04) 0%,transparent 60%),var(--ink)}
-#vcanvas-wrap::-webkit-scrollbar{width:5px;height:5px}
-#vcanvas-wrap::-webkit-scrollbar-thumb{background:var(--steel);border-radius:3px}
-#remote-canvas{display:block;cursor:crosshair;box-shadow:0 0 0 1px var(--steel),0 20px 80px rgba(0,0,0,.7);border-radius:2px;image-rendering:pixelated;max-width:100%;max-height:100%}
-
-/* splash overlay */
-#vsplash{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none}
-#vsplash::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--steel) 1px,transparent 1px),linear-gradient(90deg,var(--steel) 1px,transparent 1px);background-size:44px 44px;opacity:.18}
-.splash-icon{width:68px;height:68px;border:1px solid var(--steel);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;background:var(--ink2);color:var(--dim);animation:float 4s ease-in-out infinite;position:relative}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.splash-t{font-size:15px;font-weight:600;color:var(--mute);position:relative}
-.splash-s{font-family:var(--mono);font-size:11px;color:var(--dim);position:relative}
-
-/* loading */
-#vloading{position:absolute;inset:0;background:rgba(13,15,20,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
-#vloading.vis{opacity:1;pointer-events:all}
-.spinner{width:34px;height:34px;border:2px solid var(--steel);border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.load-msg{font-family:var(--mono);font-size:12px;color:var(--mute)}
-
-/* clipboard panel */
-#vclip{position:absolute;right:14px;top:60px;width:270px;background:var(--ink3);border:1px solid var(--steel);border-radius:10px;padding:14px;z-index:60;display:none;box-shadow:0 16px 48px rgba(0,0,0,.5)}
-#vclip.open{display:block}
-#vclip label{font-family:var(--mono);font-size:10px;color:var(--mute);display:block;margin-bottom:6px}
-#vclip-text{width:100%;height:76px;background:var(--ink4);border:1px solid var(--steel);border-radius:6px;padding:8px;font-family:var(--mono);font-size:11px;color:var(--light);resize:none;outline:none}
-#vclip-text:focus{border-color:var(--cyan)}
-.vclip-btns{display:flex;gap:7px;margin-top:8px}
-.vclip-btns button{flex:1;padding:7px;background:var(--ink4);border:1px solid var(--steel);border-radius:5px;font-family:var(--mono);font-size:10px;color:var(--mute);cursor:pointer;transition:all var(--tr)}
-.vclip-btns button:hover{background:var(--steel);color:var(--white)}
-
-/* toast */
-#toast{position:fixed;bottom:22px;right:22px;background:var(--ink3);border:1px solid var(--steel);border-radius:8px;padding:11px 16px;font-family:var(--mono);font-size:12px;color:var(--fog);max-width:300px;transform:translateY(16px);opacity:0;transition:all .25s;z-index:500}
-#toast.vis{opacity:1;transform:none}
-#toast.err{border-color:var(--red);color:var(--red)}
-#toast.good{border-color:var(--green);color:var(--green)}
-
-/* modal */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
-.modal-bg.open{opacity:1;pointer-events:all}
-.modal{background:var(--ink2);border:1px solid var(--steel);border-radius:14px;width:500px;max-width:calc(100vw - 32px);padding:36px;position:relative;transform:scale(.95) translateY(14px);transition:transform .2s}
-.modal-bg.open .modal{transform:scale(1) translateY(0)}
-.modal-x{position:absolute;top:14px;right:14px;width:30px;height:30px;background:var(--steel);border:none;border-radius:7px;font-size:16px;color:var(--mute);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--tr)}
-.modal-x:hover{background:var(--dim);color:var(--white)}
-.modal h3{font-family:var(--head);font-weight:900;font-size:26px;color:var(--white);margin-bottom:7px}
-.modal-sub{font-size:14px;color:var(--mute);margin-bottom:24px;line-height:1.6}
-.mdl-dl{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--ink);border:1px solid var(--steel);border-radius:9px;margin-bottom:8px;cursor:pointer;transition:all var(--tr);text-decoration:none;color:inherit}
-.mdl-dl:hover{background:var(--ink3);border-color:var(--dim)}
-.mdl-icon{font-size:26px;flex-shrink:0}
-.mdl-info{flex:1}
-.mdl-name{font-weight:700;color:var(--white);font-size:14px}
-.mdl-meta{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px}
-.mdl-arr{font-size:17px;color:var(--dim)}
-.modal-note{margin-top:14px;padding:12px 14px;background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.14);border-radius:7px;font-size:12px;color:var(--mute);line-height:1.7}
-.modal-note strong{color:var(--fog)}
-.modal-note .code-inline{font-family:var(--mono);background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-size:11px}
-
-/* ═══ SCROLL ANIMATIONS ═══ */
-.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
-.reveal.vis{opacity:1;transform:none}
-.stagger>*{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}
-.stagger.vis>*:nth-child(1){opacity:1;transform:none;transition-delay:0s}
-.stagger.vis>*:nth-child(2){opacity:1;transform:none;transition-delay:.08s}
-.stagger.vis>*:nth-child(3){opacity:1;transform:none;transition-delay:.16s}
-.stagger.vis>*:nth-child(4){opacity:1;transform:none;transition-delay:.24s}
-.stagger.vis>*:nth-child(5){opacity:1;transform:none;transition-delay:.32s}
-.stagger.vis>*:nth-child(6){opacity:1;transform:none;transition-delay:.4s}
-
-footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
-.foot-logo{font-family:var(--head);font-weight:900;font-size:19px;color:var(--white)}
-.foot-logo span{color:var(--cyan)}
-.foot-links{display:flex;gap:22px;list-style:none}
-.foot-links a{font-size:13px;color:var(--dim);text-decoration:none;transition:color var(--tr)}
-.foot-links a:hover{color:var(--mute)}
-.foot-copy{font-family:var(--mono);font-size:11px;color:var(--dim);width:100%}
-@media(max-width:600px){footer{padding:32px 20px}}
-</style>
+<link rel="stylesheet" href="style.css">
+<script src="js/index.js" defer></script>
 </head>
 <body>
 
-<!-- ═══════════ NAV ═══════════ -->
 <nav>
   <a href="#" class="nav-logo" onclick="showPage('home',this)">
-    <div class="nav-logo-mark">D</div>
     Delta<span>RDT</span>
   </a>
   <ul>
@@ -315,13 +24,7 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
   </ul>
   <button class="nav-cta" onclick="showPage('remote')">Connect Now</button>
 </nav>
-
-<!-- ════════════════════════════════════════════
-     HOME PAGE
-════════════════════════════════════════════ -->
 <div id="p-home" class="page active">
-
-<!-- HERO -->
 <section id="hero">
   <div class="hero-eyebrow">Open Source Remote Desktop</div>
   <h1>
@@ -332,7 +35,7 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
   </h1>
   <p class="hero-sub">
     Install the <strong>DeltaRDT agent</strong> on the PC you want to share.
-    Anyone with a code connects instantly from any browser — no port forwarding, no IT department.
+    Anyone with a code connects instantly from any browser, no port forwarding.
   </p>
   <div class="hero-btns">
     <button class="btn-p" onclick="openDlModal()">↓ Download Agent</button>
@@ -345,8 +48,6 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
     <div class="os-badge"><span class="os-dot"></span>Free forever</div>
   </div>
 </section>
-
-<!-- STATS -->
 <div id="stats">
   <div class="stat"><div class="stat-num">3.8</div><div class="stat-lbl">RFB Protocol</div></div>
   <div class="stat"><div class="stat-num">&lt;50ms</div><div class="stat-lbl">Typical latency</div></div>
@@ -354,37 +55,30 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
   <div class="stat"><div class="stat-num">0</div><div class="stat-lbl">Open ports needed</div></div>
   <div class="stat"><div class="stat-num">MIT</div><div class="stat-lbl">Open source</div></div>
 </div>
-
-<!-- HOW IT WORKS -->
 <div id="how" class="section-full">
   <div class="inner">
     <div class="reveal">
       <div class="s-label">How it works</div>
-      <h2>Three steps.<br><span class="acc">You're in.</span></h2>
-      <p class="s-intro">No router config. No static IP. No IT department. The agent handles everything through our encrypted relay.</p>
+      <h2>Three steps<br></h2>
+      <p class="s-intro">No router config. No static IP. The program handles everything through our encrypted relay.</p>
     </div>
     <div class="how-grid stagger" style="margin-top:52px">
       <div class="how-step" data-n="1">
-        <div class="how-icon">💾</div>
-        <h3>Download &amp; run the agent</h3>
-        <p>Install DeltaRDT on the Windows, Mac, or Linux machine you want to access remotely. Double-click to run — it starts in the system tray.</p>
+        <h3>Download and run the agent</h3>
+        <p>Install DeltaRDT on the Windows, Mac, or Linux machine you want to access remotely. Double-click to run; which will stay running in the background (or in your system tray).</p>
         <span class="role-tag tag-host">On the host PC</span>
       </div>
       <div class="how-step" data-n="2">
-        <div class="how-icon">🔑</div>
         <h3>Get your session code</h3>
-        <p>The agent shows a short 6-character session code. Share it with whoever needs access, or save it for yourself to reconnect later.</p>
+        <p>The agent shows a short 6-character session code. Share it with whoever needs access or save it for yourself to reconnect later.</p>
         <span class="role-tag tag-both">Shown on screen</span>
       </div>
       <div class="how-step" data-n="3">
-        <div class="how-icon">🌐</div>
         <h3>Connect from any browser</h3>
-        <p>Click <strong>Connect Now</strong> above — on a Chromebook, phone, or any other PC. Enter the code and you're viewing the remote desktop.</p>
+        <p>Click <strong>Connect Now</strong> above - on a Chromebook, phone, or any other PC. Enter the code and you're viewing the remote desktop.</p>
         <span class="role-tag tag-view">On the viewer device</span>
       </div>
     </div>
-
-    <!-- Architecture diagram -->
     <div class="reveal" style="margin-top:52px">
       <div style="background:var(--ink);border:1px solid var(--steel);border-radius:14px;padding:32px;overflow-x:auto">
         <div style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:20px;letter-spacing:2px;text-transform:uppercase">Architecture overview</div>
@@ -414,20 +108,18 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
           <div style="flex:1;background:rgba(255,170,0,.05);border:1px solid rgba(255,170,0,.2);border-radius:10px;padding:18px 16px;text-align:center">
             <div style="font-size:22px;margin-bottom:6px">📱</div>
             <div style="font-family:var(--head);font-weight:700;font-size:14px;color:var(--white)">Your Browser</div>
-            <div style="font-family:var(--mono);font-size:10px;color:var(--mute);margin-top:4px">Chromebook / phone<br>No install needed</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--mute);margin-top:4px">Chromebook/ phone<br>No install needed</div>
           </div>
         </div>
         <div style="margin-top:18px;display:flex;gap:20px;flex-wrap:wrap">
-          <div style="font-size:12px;color:var(--dim)">✅ Both sides connect <em>outbound</em> — no port forwarding needed</div>
-          <div style="font-size:12px;color:var(--dim)">🔒 Traffic encrypted end-to-end via TLS</div>
-          <div style="font-size:12px;color:var(--dim)">🌍 Works from any network, any country</div>
+          <div style="font-size:12px;color:var(--dim)">Both sides connect <em>outbound</em>, no port forwarding needed</div>
+          <div style="font-size:12px;color:var(--dim)">Traffic encrypted end-to-end via TLS</div>
+          <div style="font-size:12px;color:var(--dim)">Works from any network, any country</div>
         </div>
       </div>
     </div>
   </div>
 </div>
-
-<!-- DOWNLOAD -->
 <section id="download" class="section reveal">
   <div class="s-label">Download</div>
   <h2>Pick your<br><span class="acc">platform.</span></h2>
@@ -435,40 +127,32 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
 
   <div class="dl-grid stagger">
     <div class="dl-card feat" onclick="openDlModal('windows')">
-      <span class="dl-os-icon">🪟</span>
       <div class="dl-name">Windows</div>
-      <div class="dl-desc">Windows 10 and 11. Runs as a background service. Auto-starts with your PC optionally.</div>
+      <div class="dl-desc">Windows 10-11</div>
       <div class="dl-ver">v1.0.0 · 4.2 MB</div>
       <a class="dl-btn" href="deltardt-setup.exe" onclick="event.stopPropagation()">Installer .exe <span class="dl-sz">↓ 4.2 MB</span></a>
       <a class="dl-btn" href="deltardt-portable.zip" onclick="event.stopPropagation()" style="font-size:12px">Portable .zip <span class="dl-sz">↓ 3.1 MB</span></a>
     </div>
     <div class="dl-card" onclick="openDlModal('mac')">
-      <span class="dl-os-icon"></span>
       <div class="dl-name">macOS</div>
-      <div class="dl-desc">Universal binary — Intel and Apple Silicon. Requires macOS 12 Monterey or later.</div>
+      <div class="dl-desc">Universal binary, Intel and Apple Silicon. Requires macOS 12 Monterey or later</div>
       <div class="dl-ver">v1.0.0 · 6.8 MB</div>
       <a class="dl-btn" href="DeltaRDT.dmg" onclick="event.stopPropagation()">DeltaRDT.dmg <span class="dl-sz">↓ 6.8 MB</span></a>
     </div>
     <div class="dl-card" onclick="openDlModal('linux')">
-      <span class="dl-os-icon">🐧</span>
       <div class="dl-name">Linux</div>
-      <div class="dl-desc">Debian/Ubuntu .deb package or a standalone Python script. X11 and Wayland support.</div>
+      <div class="dl-desc">Debian .deb package or a standalone Python script. X11 and Wayland support.</div>
       <div class="dl-ver">v1.0.0 · 2.1 MB</div>
       <a class="dl-btn" href="deltardt.deb" onclick="event.stopPropagation()">.deb package <span class="dl-sz">↓ 2.1 MB</span></a>
       <a class="dl-btn" href="deltardt.py" onclick="event.stopPropagation()" style="font-size:12px">Python script <span class="dl-sz">↓ 48 KB</span></a>
     </div>
   </div>
-  <div style="margin-top:24px;text-align:center">
-    <p style="font-size:13px;color:var(--dim)">Open source · MIT license · <a href="https://github.com/yourname/deltardt" style="color:var(--cyan);text-decoration:none">View source on GitHub ↗</a></p>
-  </div>
 </section>
-
-<!-- SETUP GUIDE -->
 <div id="setup" class="section-full">
   <div class="inner">
     <div class="reveal">
       <div class="s-label">Setup guide</div>
-      <h2>Get connected<br><span class="acc">in minutes.</span></h2>
+      <h2>Get connected<br><span class="acc">in minutes</span></h2>
       <p class="s-intro">Step-by-step instructions for every platform. Takes about 2 minutes from download to connected.</p>
     </div>
 
@@ -479,24 +163,23 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
       <button class="tab-btn" onclick="switchTab('cnx',this)">🌐 Connecting</button>
       <button class="tab-btn" onclick="switchTab('slf',this)">⚙️ Self-host</button>
     </div>
-
-    <!-- WINDOWS -->
+=
     <div class="tab-content on" id="tc-win">
       <div class="setup-steps">
         <div class="ss"><div class="ss-num">1</div><div class="ss-body">
           <h4>Download and run the installer</h4>
-          <p>Download <strong>deltardt-setup.exe</strong> and double-click it. Windows SmartScreen may warn about an unknown publisher — click <strong>"More info" → "Run anyway"</strong>. This is normal for unsigned software.</p>
-          <div class="info-box warn"><span class="ib-icon">⚠️</span><p class="ib-text">Can't install? Use the <strong>portable .zip</strong> instead — extract and double-click <code>deltardt.exe</code>, no installation needed, no admin rights.</p></div>
+          <p>Download <strong>deltardt-setup.exe</strong> and double-click it. Windows SmartScreen may warn about an unknown publisher. Click <strong>"More info" → "Run anyway"</strong>. This is normal for unsigned software.</p>
+          <div class="info-box warn">=<p class="ib-text">Can't install? Use the portable program instead; extract and double-click <code>deltardt.exe</code>, no installation needed, no admin rights.</p></div>
         </div></div>
         <div class="ss"><div class="ss-num">2</div><div class="ss-body">
           <h4>Allow through Windows Firewall</h4>
-          <p>A firewall prompt appears on first run. Click <strong>Allow access</strong> for both Private and Public networks. This lets the agent reach the relay server outbound — no inbound ports are opened.</p>
-          <div class="info-box"><span class="ib-icon">💡</span><p class="ib-text">If the prompt doesn't appear, go to <strong>Windows Security → Firewall → Allow an app</strong> and add DeltaRDT manually.</p></div>
+          <p>A firewall prompt appears on first run. Click <strong>Allow access</strong> for both Private and Public networks. This lets the agent reach the relay server outbound; no inbound ports are opened.</p>
+          <div class="info-box">=<p class="ib-text">If the prompt doesn't appear, go to <strong>Windows Security → Firewall → Allow an app</strong> and add DeltaRDT manually.</p></div>
         </div></div>
         <div class="ss"><div class="ss-num">3</div><div class="ss-body">
           <h4>Your session code appears</h4>
-          <p>A tray icon appears in the system tray (bottom-right). The DeltaRDT window shows your <strong>session code</strong> — e.g. <code style="font-family:var(--mono);background:rgba(0,229,255,.1);padding:2px 7px;border-radius:4px;font-size:13px">AB3-X92</code>. Share this with whoever needs to connect.</p>
-          <div class="info-box ok"><span class="ib-icon">✅</span><p class="ib-text">Codes refresh every 24 hours. Right-click the tray icon → <strong>New Code</strong> to generate a fresh one anytime.</p></div>
+          <p>A tray icon appears in the system tray (bottom-right). The DeltaRDT window shows your <strong>session code</strong>, e.g. <code style="font-family:var(--mono);background:rgba(0,229,255,.1);padding:2px 7px;border-radius:4px;font-size:13px">ABC-123</code>. Share this with whoever needs to connect.</p>
+          <div class="info-box ok">=<p class="ib-text">Codes refresh every 24 hours. Right-click the tray icon → <strong>New Code</strong> to generate a fresh one anytime.</p></div>
         </div></div>
         <div class="ss"><div class="ss-num">4</div><div class="ss-body">
           <h4>Optional: start with Windows</h4>
@@ -509,22 +192,20 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
         </div></div>
       </div>
     </div>
-
-    <!-- MAC -->
     <div class="tab-content" id="tc-mac">
       <div class="setup-steps">
         <div class="ss"><div class="ss-num">1</div><div class="ss-body">
           <h4>Download and open the .dmg</h4>
           <p>Download <strong>DeltaRDT.dmg</strong>, open it, and drag DeltaRDT into your <strong>Applications</strong> folder. Then launch it from Applications or Spotlight.</p>
-          <div class="info-box warn"><span class="ib-icon">⚠️</span><p class="ib-text">macOS may say the app is from an "unidentified developer". Go to <strong>System Settings → Privacy &amp; Security</strong> and click <strong>"Open Anyway"</strong>.</p></div>
+          <div class="info-box warn"><p class="ib-text">macOS may say the app is from an "unidentified developer". Go to <strong>System Settings → Privacy & Security</strong> and click <strong>"Open Anyway"</strong>.</p></div>
         </div></div>
         <div class="ss"><div class="ss-num">2</div><div class="ss-body">
           <h4>Grant Screen Recording permission</h4>
-          <p>On first launch macOS prompts for <strong>Screen Recording</strong> access. This is required to capture your screen. If you miss the prompt, go to <strong>System Settings → Privacy &amp; Security → Screen Recording</strong> and enable DeltaRDT.</p>
+          <p>On first launch macOS prompts for <strong>Screen Recording</strong> access. This is required to capture your screen. If you miss the prompt, go to <strong>System Settings → Privacy & Security → Screen Recording</strong> and enable DeltaRDT.</p>
         </div></div>
         <div class="ss"><div class="ss-num">3</div><div class="ss-body">
           <h4>Grant Accessibility permission</h4>
-          <p>To allow keyboard and mouse input from the remote side, also enable DeltaRDT under <strong>Privacy &amp; Security → Accessibility</strong>. Both permissions are needed for full control.</p>
+          <p>To allow keyboard and mouse input from the remote side, also enable DeltaRDT under <strong>Privacy & Security → Accessibility</strong>. Both permissions are needed for full control.</p>
         </div></div>
         <div class="ss"><div class="ss-num">4</div><div class="ss-body">
           <h4>Session code in the menu bar</h4>
@@ -533,26 +214,24 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
         </div></div>
       </div>
     </div>
-
-    <!-- LINUX -->
     <div class="tab-content" id="tc-lnx">
       <div class="setup-steps">
         <div class="ss"><div class="ss-num">1</div><div class="ss-body">
           <h4>Install Python dependencies</h4>
           <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">sudo apt update && sudo apt install python3-pip</span><br><span class="kw">pip3 install mss pyautogui websockets Pillow</span></div>
-          <div class="info-box"><span class="ib-icon">💡</span><p class="ib-text">On Fedora/RHEL: <code>sudo dnf install python3-pip</code> · On Arch: <code>sudo pacman -S python-pip</code></p></div>
+          <div class="info-box"><p class="ib-text">On Fedora/RHEL: <code>sudo dnf install python3-pip</code> · On Arch (btw): <code>sudo pacman -S python-pip</code></p></div>
         </div></div>
         <div class="ss"><div class="ss-num">2</div><div class="ss-body">
           <h4>Download and run the agent</h4>
-          <p>Option A — .deb package (Ubuntu/Debian):</p>
+          <p>Option A: .deb package (Ubuntu/Debian):</p>
           <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">sudo dpkg -i</span> deltardt_1.0.0_amd64.deb<br><span class="kw">deltardt</span></div>
-          <p style="margin-top:12px">Option B — Python script (any distro):</p>
+          <p style="margin-top:12px">Option B: Python script (any distro):</p>
           <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">python3</span> deltardt.py</div>
         </div></div>
         <div class="ss"><div class="ss-num">3</div><div class="ss-body">
-          <h4>Wayland users — set DISPLAY</h4>
+          <h4>Wayland users: set DISPLAY environment var</h4>
           <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">DISPLAY=:0</span> python3 deltardt.py</div>
-          <div class="info-box warn"><span class="ib-icon">⚠️</span><p class="ib-text">Pure Wayland without XWayland may limit screen capture. Ubuntu 22+ has XWayland enabled by default.</p></div>
+          <div class="info-box warn"><p class="ib-text">Pure Wayland without XWayland may limit screen capture. Ubuntu 22+ has XWayland enabled by default.</p></div>
         </div></div>
         <div class="ss"><div class="ss-num">4</div><div class="ss-body">
           <h4>Session code in terminal or GUI</h4>
@@ -561,47 +240,43 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
         </div></div>
       </div>
     </div>
-
-    <!-- CONNECTING -->
     <div class="tab-content" id="tc-cnx">
       <div class="setup-steps">
         <div class="ss"><div class="ss-num">1</div><div class="ss-body">
           <h4>No download needed on the viewer side</h4>
-          <p>The <strong>Connect Now</strong> viewer runs entirely in your browser — on a Chromebook, phone, tablet, or another PC. Just open this website and click <strong>Connect Now</strong> in the nav bar.</p>
+          <p>The <strong>Connect Now</strong> viewer runs entirely in your browser; on a Chromebook, phone, tablet, or another PC. Just open this website and click <strong>Connect Now</strong> in the nav bar.</p>
           <button class="btn-p" style="margin-top:8px;font-size:13px;padding:10px 22px" onclick="showPage('remote')">→ Open Connect page</button>
         </div></div>
         <div class="ss"><div class="ss-num">2</div><div class="ss-body">
           <h4>Enter the session code</h4>
           <p>Type the <strong>session code</strong> shown by the host PC into the Session Code box. The format is 6 characters like <code style="font-family:var(--mono);background:rgba(0,229,255,.1);padding:2px 7px;border-radius:4px;font-size:13px">AB3X92</code>. Leave the relay URL as the default unless you're self-hosting.</p>
-          <div class="info-box"><span class="ib-icon">💡</span><p class="ib-text">The relay field defaults to <code>wss://relay.deltardt.app</code>. Only change this if you're running your own relay server.</p></div>
+          <div class="info-box"><p class="ib-text">The relay field defaults to <code>wss://relay.deltardt.app</code>. Only change this if you're running your own relay server.</p></div>
         </div></div>
         <div class="ss"><div class="ss-num">3</div><div class="ss-body">
-          <h4>You're in — full keyboard &amp; mouse control</h4>
+          <h4>You're in: full keyboard and mouse control</h4>
           <p>The remote desktop appears in the browser window. Click to move the mouse, type to send keystrokes. The toolbar lets you send <strong>Ctrl+Alt+Del</strong>, sync clipboard text, fit the screen, or go fullscreen.</p>
-          <div class="info-box ok"><span class="ib-icon">✅</span><p class="ib-text">On Chromebook: press <strong>Ctrl+Shift+F</strong> to go fullscreen for the best experience. All keyboard shortcuts are forwarded correctly to the remote PC.</p></div>
+          <div class="info-box ok"><p class="ib-text">On Chromebook: press <strong>Ctrl+Shift+F</strong> to go fullscreen for the best experience. All keyboard shortcuts are forwarded correctly to the remote PC.</p></div>
         </div></div>
         <div class="ss"><div class="ss-num">4</div><div class="ss-body">
           <h4>Adjust quality for your connection speed</h4>
-          <p>Use the <strong>Quality</strong> dropdown in the viewer toolbar to trade image quality for speed. <strong>Low</strong> works great on mobile data or slow hotel WiFi. <strong>Full</strong> is best on a fast home network.</p>
+          <p>Use the <strong>Quality</strong> dropdown in the viewer toolbar to trade image quality for speed. <strong>Low</strong> works great on mobile data or slow ahh hotel Wi-Fi. <strong>Full</strong> is best on a fast home network.</p>
         </div></div>
       </div>
     </div>
-
-    <!-- SELF-HOST -->
     <div class="tab-content" id="tc-slf">
       <div class="setup-steps">
         <div class="ss"><div class="ss-num">1</div><div class="ss-body">
           <h4>Why self-host?</h4>
-          <p>If you want <strong>zero third-party involvement</strong>, or you need to support many simultaneous sessions, you can run the relay server on your own VPS. A $4/month DigitalOcean or Hetzner server handles hundreds of concurrent sessions.</p>
+          <p>If you want <strong>zero third-party involvement</strong>, or you need to support many simultaneous sessions, you can run the relay server on your own VPS. A $4/month DigitalOcean or free-forever Oracle server handles hundreds of concurrent sessions.</p>
         </div></div>
         <div class="ss"><div class="ss-num">2</div><div class="ss-body">
           <h4>Clone the repo and install</h4>
-          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">git clone</span> https://github.com/yourname/deltardt<br><span class="kw">cd</span> deltardt<br><span class="kw">pip3 install</span> websockets</div>
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">git clone</span>https://github.com/nicepeople67/Delta-RDT<br><span class="kw">cd</span> deltardt<br><span class="kw">pip3 install</span> websockets</div>
         </div></div>
         <div class="ss"><div class="ss-num">3</div><div class="ss-body">
           <h4>Run the relay server</h4>
-          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="cm"># Start relay on port 443 (recommended) or 6080</span><br><span class="kw">python3</span> relay_server.py --ws-port <span class="st">443</span> --api-port <span class="st">444</span></div>
-          <div class="info-box"><span class="ib-icon">💡</span><p class="ib-text">Use <code>nginx</code> as a reverse proxy in front to handle TLS certificates (Let's Encrypt). This gives you <code>wss://</code> instead of <code>ws://</code>, required for HTTPS pages.</p></div>
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><br><span class="kw">python3</span> relay_server.py --ws-port <span class="st">443</span> --api-port <span class="st">444</span></div>
+          <div class="info-box"><p class="ib-text">Use <code>nginx</code> as a reverse proxy in front to handle TLS certificates (Let's Encrypt). This gives you <code>wss://</code> instead of <code>ws://</code>, required for HTTPS pages.</p></div>
         </div></div>
         <div class="ss"><div class="ss-num">4</div><div class="ss-body">
           <h4>Register a session and get a token</h4>
@@ -612,7 +287,7 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
           <h4>Point the agent at your relay</h4>
           <p>Launch the agent with your relay address:</p>
           <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">python3</span> deltardt.py --relay wss://your-server --port <span class="st">5900</span></div>
-          <div class="info-box ok"><span class="ib-icon">✅</span><p class="ib-text">Your screen data now flows entirely through your own server. DeltaRDT's relay never sees it.</p></div>
+          <div class="info-box ok"><p class="ib-text">Your screen data now flows entirely through your own server. DeltaRDT's relay never sees it.</p></div>
         </div></div>
       </div>
     </div>
@@ -620,23 +295,20 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
   </div>
 </div>
 
-<!-- FEATURES -->
 <section id="features" class="section">
   <div class="reveal">
     <div class="s-label">Features</div>
     <h2>Built right,<br><span class="acc">not bolted on.</span></h2>
   </div>
   <div class="feat-grid stagger">
-    <div class="feat"><span class="feat-icon">🔒</span><h3>End-to-end encrypted</h3><p>All traffic is TLS-encrypted via the relay. Your screen data is never stored or inspected on our servers.</p></div>
-    <div class="feat"><span class="feat-icon">⚡</span><h3>Hextile encoding</h3><p>Our custom VNC server uses Hextile tile compression — only changed screen regions are sent each frame.</p></div>
-    <div class="feat"><span class="feat-icon">🌍</span><h3>Works across networks</h3><p>Connect from a Chromebook at a coffee shop to a PC at home. Different networks, different ISPs — no problem.</p></div>
-    <div class="feat"><span class="feat-icon">📋</span><h3>Clipboard sync</h3><p>Copy on the remote, paste in the browser. Or vice versa. Bidirectional text clipboard sync built in.</p></div>
-    <div class="feat"><span class="feat-icon">🎮</span><h3>Full keyboard &amp; mouse</h3><p>Every key — Ctrl, Alt, Win/Cmd, F-keys, special characters — forwarded exactly to the remote machine.</p></div>
-    <div class="feat"><span class="feat-icon">📦</span><h3>Open source &amp; self-hostable</h3><p>MIT licensed. Audit the code, run your own relay, or contribute back. No black boxes.</p></div>
+    <div class="feat"><h3>End-to-end encrypted</h3><p>All traffic is TLS-encrypted via the relay. Your screen data is never stored or inspected on our servers.</p></div>
+    <div class="feat"><h3>Hextile encoding</h3><p>Our custom VNC server uses Hextile tile compression; only changed screen regions are sent each frame.</p></div>
+    <div class="feat"><h3>Works across networks</h3><p>Connect from a Chromebook at a coffee shop to a PC at home. Different networks, different ISPs? no problem.</p></div>
+    <div class="feat"><h3>Clipboard sync</h3><p>Copy on the remote, paste in the browser. Or vice versa. Bidirectional text clipboard sync built in.</p></div>
+    <div class="feat"><h3>Full keyboard and mouse</h3><p>Every key (Ctrl, Alt, Win/Cmd, F-keys, special characters) is forwarded to the remote machine.</p></div>
+    <div class="feat"><h3>Open source and self-hostable</h3><p>BSD 3-Clause license. Audit the code, run your own relay, or contribute back.</p></div>
   </div>
 </section>
-
-<!-- FAQ -->
 <section id="faq" class="section" style="max-width:740px">
   <div class="reveal" style="text-align:center;margin-bottom:44px">
     <div class="s-label" style="justify-content:center;display:flex">FAQ</div>
@@ -644,8 +316,8 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
   </div>
   <div class="reveal">
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">Is DeltaRDT really free? What's the catch?<span class="faq-chev">▾</span></button>
-      <div class="faq-a"><p>Yes, fully free for personal use. We run the relay server and offset costs with optional Pro plans for teams needing multiple simultaneous sessions or SLA guarantees. The core product stays free forever.</p></div>
+      <button class="faq-q" onclick="toggleFaq(this)">Is DeltaRDT really free?<span class="faq-chev">▾</span></button>
+      <div class="faq-a"><p>Yes, it is fully free for personal use. We run the relay server (or you can self-host it). The core product stays free forever.</p></div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">Can people connect without my knowledge?<span class="faq-chev">▾</span></button>
@@ -653,24 +325,22 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">Does this work from a different country / network?<span class="faq-chev">▾</span></button>
-      <div class="faq-a"><p>Yes — that's the whole point. The relay server sits in the middle, so it doesn't matter if the host and viewer are on different ISPs, behind CGNAT, or on different continents. Both sides just need internet access.</p></div>
+      <div class="faq-a"><p>Yes, that's the whole point. The relay server sits in the middle, so it doesn't matter if the host and viewer are on different ISPs, using ISPs that use CGNAT, or on different continents. Both sides just need internet access.</p></div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">Does this work through a corporate firewall / VPN?<span class="faq-chev">▾</span></button>
-      <div class="faq-a"><p>Usually yes. The agent uses outbound WebSocket over port 443 (same as HTTPS), which most firewalls permit. Strict corporate VPNs that do deep packet inspection may block WebSocket — check with your IT team.</p></div>
+      <button class="faq-q" onclick="toggleFaq(this)">Does this work through a company firewall / VPN?<span class="faq-chev">▾</span></button>
+      <div class="faq-a"><p>Usually yes. The agent uses outbound WebSocket over port 443 (same as HTTPS), which most firewalls permit. Strict corporate VPNs that do deep packet inspection may block WebSocket. Check with your IT team.</p></div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">Is my screen data stored anywhere?<span class="faq-chev">▾</span></button>
-      <div class="faq-a"><p>No. The relay just forwards raw encrypted bytes between the two sides — it can't see what's on your screen. No recordings, no logs of screen content. <a href="#">Self-host the relay</a> for complete control.</p></div>
+      <div class="faq-a"><p>No. The relay just forwards raw encrypted bytes between the two sides - it can't see what's on your screen. No recordings, no logs of screen content. <a href="#">Self-host the relay</a> for complete control.</p></div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">How is this different from TeamViewer or AnyDesk?<span class="faq-chev">▾</span></button>
-      <div class="faq-a"><p>TeamViewer and AnyDesk are proprietary closed-source apps with free-tier restrictions. DeltaRDT is fully open source (MIT), the protocol is documented, you can self-host everything, and the viewer needs zero install — just a browser.</p></div>
+      <div class="faq-a"><p>TeamViewer and AnyDesk are proprietary closed-source apps with free-tier restrictions. DeltaRDT is fully open source (MIT), the protocol is documented, you can self-host everything, and the viewer needs zero install, just a browser.</p></div>
     </div>
   </div>
 </section>
-
-<!-- FOOTER -->
 <footer>
   <div class="foot-logo">Delta<span>RDT</span></div>
   <ul class="foot-links">
@@ -680,20 +350,13 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
     <li><a href="#">Terms</a></li>
     <li><a href="#">Contact</a></li>
   </ul>
-  <div class="foot-copy">© 2025 DeltaRDT · MIT License · Built with Python &amp; vanilla JS · No trackers, no ads, no telemetry</div>
+  <div class="foot-copy">© 2025 DeltaRDT · MIT License · Built with Python and vanilla JS · No trackers, no ads, no telemetry</div>
 </footer>
 
-</div><!-- /p-home -->
-
-
-<!-- ════════════════════════════════════════════
-     REMOTE DESKTOP VIEWER PAGE
-════════════════════════════════════════════ -->
+</div>
 <div id="p-remote" class="page">
 
   <div id="viewer-shell">
-
-    <!-- top bar -->
     <div id="vbar">
       <div class="vbar-logo"><span>Delta</span>RDT</div>
       <div class="vbar-sep"></div>
@@ -704,21 +367,19 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
         <span id="vstatus-text">Disconnected</span>
       </div>
     </div>
-
-    <!-- sidebar -->
     <div id="vsidebar">
       <div class="vs-sec">Connect</div>
       <div id="vconn-panel">
         <div class="vf">
-          <label>RELAY URL</label>
+          <label>Relay URL</label>
           <input type="text" id="vi-relay" value="wss://relay.deltardt.app" placeholder="wss://relay.deltardt.app">
         </div>
         <div class="vf">
-          <label>SESSION CODE</label>
+          <label>Session code</label>
           <input type="text" id="vi-code" placeholder="AB3-X92" maxlength="16" style="font-size:16px;letter-spacing:2px;text-transform:uppercase">
         </div>
         <div class="vf">
-          <label>PASSWORD (if set)</label>
+          <label>Passphrase (if set)</label>
           <input type="password" id="vi-pass" placeholder="optional">
         </div>
         <button id="vbtn-connect" onclick="vncConnect()">Connect</button>
@@ -734,8 +395,6 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
         <button class="vs-tool" onclick="toggleClip()">Clipboard</button>
       </div>
     </div>
-
-    <!-- main canvas -->
     <div id="vmain">
       <div id="vtoolbar">
         <span id="vsess-label" style="font-size:13px;font-weight:700;color:var(--white)">No session</span>
@@ -744,7 +403,7 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
         <button class="vt-btn" onclick="sendSpecialKey(0xff13)">⏸ Pause</button>
         <button class="vt-btn" onclick="sendSpecialKey(0xff61)">❖ Super</button>
         <select id="vquality" onchange="setQuality(this.value)" style="background:var(--ink3);border:1px solid var(--steel);border-radius:6px;padding:5px 8px;font-family:var(--mono);font-size:11px;color:var(--mute);cursor:pointer;outline:none">
-          <option value="full">Full quality</option>
+          <option value="full">Full quality (slower)</option>
           <option value="med" selected>Medium</option>
           <option value="low">Low (faster)</option>
         </select>
@@ -780,580 +439,22 @@ footer{background:var(--ink2);border-top:1px solid var(--steel);padding:44px 48p
       </div>
     </div>
 
-  </div><!-- /viewer-shell -->
+  </div>
 
-</div><!-- /p-remote -->
-
-<!-- DOWNLOAD MODAL -->
+</div>
 <div class="modal-bg" id="dl-modal" onclick="closeDlModal(event)">
   <div class="modal">
     <button class="modal-x" onclick="document.getElementById('dl-modal').classList.remove('open')">✕</button>
     <h3>Download DeltaRDT Agent</h3>
-    <p class="modal-sub">Install on the PC you want to control. No download needed on the viewer side — just use the Connect page.</p>
-    <a class="mdl-dl" href="deltardt-setup.exe"><span class="mdl-icon">🪟</span><div class="mdl-info"><div class="mdl-name">Windows Installer</div><div class="mdl-meta">deltardt-setup.exe · 4.2 MB · Windows 10/11</div></div><span class="mdl-arr">↓</span></a>
-    <a class="mdl-dl" href="deltardt-portable.zip"><span class="mdl-icon">📦</span><div class="mdl-info"><div class="mdl-name">Windows Portable</div><div class="mdl-meta">deltardt-portable.zip · 3.1 MB · No install needed</div></div><span class="mdl-arr">↓</span></a>
-    <a class="mdl-dl" href="DeltaRDT.dmg"><span class="mdl-icon"></span><div class="mdl-info"><div class="mdl-name">macOS App</div><div class="mdl-meta">DeltaRDT.dmg · 6.8 MB · Intel &amp; Apple Silicon</div></div><span class="mdl-arr">↓</span></a>
-    <a class="mdl-dl" href="deltardt.deb"><span class="mdl-icon">🐧</span><div class="mdl-info"><div class="mdl-name">Linux .deb</div><div class="mdl-meta">deltardt_1.0.0_amd64.deb · 2.1 MB · Debian/Ubuntu</div></div><span class="mdl-arr">↓</span></a>
-    <a class="mdl-dl" href="deltardt.py"><span class="mdl-icon">🐍</span><div class="mdl-info"><div class="mdl-name">Python Script (all platforms)</div><div class="mdl-meta">deltardt.py · 48 KB · Requires Python 3.9+</div></div><span class="mdl-arr">↓</span></a>
-    <div class="modal-note">After installing, a <strong>session code</strong> appears on screen. Share it — the viewer connects at <span class="code-inline">deltardt.app → Connect Now</span></div>
+    <p class="modal-sub">Install on the PC you want to control. No download needed on the viewer side. Just use the Connect page.</p>
+    <a class="mdl-dl" href="deltardt-setup.exe"><div class="mdl-info"><div class="mdl-name">Windows Installer</div><div class="mdl-meta">deltardt-setup.exe · 4.2 MB · Windows 10/11</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="deltardt-portable.zip"><div class="mdl-info"><div class="mdl-name">Windows Portable</div><div class="mdl-meta">deltardt-portable.zip · 3.1 MB · No install needed</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="DeltaRDT.dmg"><span class="mdl-icon"></span><div class="mdl-info"><div class="mdl-name">macOS App</div><div class="mdl-meta">DeltaRDT.dmg · 6.8 MB · Intel and Apple Silicon</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="deltardt.deb"><div class="mdl-info"><div class="mdl-name">Linux .deb</div><div class="mdl-meta">deltardt_1.0.0_amd64.deb · 2.1 MB · Debian/Ubuntu</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="deltardt.py"><div class="mdl-info"><div class="mdl-name">Python Script (all platforms)</div><div class="mdl-meta">deltardt.py · 48 KB · Requires Python 3.9+</div></div><span class="mdl-arr">↓</span></a>
+    <div class="modal-note">After installing, a session code appears on screen. The viewer connects at <span class="code-inline">deltardt.app → Connect Now</span></div>
   </div>
 </div>
-
-<!-- Toast -->
 <div id="toast"></div>
-
-<script>
-/* ═══════════════════════════════════════════
-   PAGE ROUTER
-═══════════════════════════════════════════ */
-function showPage(name, linkEl) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('p-' + name).classList.add('active');
-  document.querySelectorAll('nav ul a').forEach(a => a.classList.remove('active'));
-  if (linkEl) linkEl.classList.add('active');
-  window.scrollTo(0, 0);
-}
-
-function scrollTo(id) {
-  setTimeout(() => {
-    const el = document.querySelector(id);
-    if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
-  }, 50);
-}
-
-/* ═══════════════════════════════════════════
-   MODAL
-═══════════════════════════════════════════ */
-function openDlModal() {
-  document.getElementById('dl-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeDlModal(e) {
-  if (e.target === document.getElementById('dl-modal')) {
-    document.getElementById('dl-modal').classList.remove('open');
-    document.body.style.overflow = '';
-  }
-}
-
-/* ═══════════════════════════════════════════
-   TABS
-═══════════════════════════════════════════ */
-function switchTab(name, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('on'));
-  btn.classList.add('on');
-  const tc = document.getElementById('tc-' + name);
-  tc.classList.add('on');
-  tc.querySelectorAll('.ss').forEach((s, i) => {
-    s.classList.remove('vis');
-    setTimeout(() => s.classList.add('vis'), i * 110);
-  });
-}
-
-/* ═══════════════════════════════════════════
-   FAQ
-═══════════════════════════════════════════ */
-function toggleFaq(btn) {
-  const item = btn.closest('.faq-item');
-  const open = item.classList.contains('open');
-  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-  if (!open) item.classList.add('open');
-}
-
-/* ═══════════════════════════════════════════
-   COPY CODE
-═══════════════════════════════════════════ */
-function copyCode(btn) {
-  const block = btn.closest('.code-block');
-  const text = Array.from(block.childNodes)
-    .filter(n => n.nodeType === 3 || n.nodeName !== 'BUTTON')
-    .map(n => n.textContent).join('').trim();
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = 'copied'; btn.classList.add('ok');
-    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
-  }).catch(() => { btn.textContent = '✓'; setTimeout(() => btn.textContent = 'copy', 2000); });
-}
-
-/* ═══════════════════════════════════════════
-   TOAST
-═══════════════════════════════════════════ */
-function toast(msg, type = '') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'vis' + (type ? ' ' + type : '');
-  clearTimeout(t._t);
-  t._t = setTimeout(() => t.classList.remove('vis'), 4000);
-}
-
-/* ═══════════════════════════════════════════
-   SCROLL ANIMATIONS
-═══════════════════════════════════════════ */
-const obs = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('vis');
-      e.target.querySelectorAll('.ss').forEach((s, i) =>
-        setTimeout(() => s.classList.add('vis'), i * 110));
-    }
-  });
-}, { threshold: 0.07 });
-
-document.querySelectorAll('.reveal, .stagger').forEach(el => obs.observe(el));
-
-// Init visible setup steps on load
-setTimeout(() => {
-  document.querySelectorAll('#tc-win .ss').forEach((s, i) =>
-    setTimeout(() => s.classList.add('vis'), 400 + i * 110));
-}, 200);
-
-/* ═══════════════════════════════════════════
-   NAV HIGHLIGHT ON SCROLL
-═══════════════════════════════════════════ */
-window.addEventListener('scroll', () => {
-  const y = window.scrollY + 80;
-  document.querySelectorAll('[id]').forEach(s => {
-    if (s.offsetTop <= y) {
-      document.querySelectorAll('nav ul a').forEach(a => {
-        a.style.color = a.getAttribute('href') === '#' + s.id ? 'var(--white)' : '';
-      });
-    }
-  });
-}, { passive: true });
-
-/* ═══════════════════════════════════════════
-   ════════════════════════════════════════════
-   RFB / VNC CLIENT (full protocol implementation)
-   ════════════════════════════════════════════
-═══════════════════════════════════════════ */
-let ws = null;
-let rfbState = 'idle';
-let ibuf = new Uint8Array(0);
-let canvas = document.getElementById('remote-canvas');
-let ctx = canvas.getContext('2d');
-let fbW = 0, fbH = 0, imgData = null;
-let fpsCount = 0, fpsTimer = 0;
-let pingStart = 0, latency = 0;
-let pointerBtns = 0;
-let recentSessions = JSON.parse(localStorage.getItem('deltardt_recent') || '[]');
-let currentScale = 1;
-
-/* Status helpers */
-function setVStatus(state, text) {
-  document.getElementById('vdot').className = state;
-  document.getElementById('vstatus-text').textContent = text;
-}
-function setVLoading(vis, msg = 'Connecting…') {
-  document.getElementById('vload-msg').textContent = msg;
-  document.getElementById('vloading').classList.toggle('vis', vis);
-}
-function setSplash(vis) {
-  document.getElementById('vsplash').style.opacity = vis ? '1' : '0';
-  document.getElementById('vsplash').style.pointerEvents = vis ? 'none' : 'none';
-  canvas.style.display = vis ? 'none' : 'block';
-}
-
-/* Buffer */
-function append(data) {
-  const n = new Uint8Array(ibuf.length + data.byteLength);
-  n.set(ibuf); n.set(new Uint8Array(data), ibuf.length); ibuf = n;
-}
-function avail() { return ibuf.length; }
-function consume(n) { const c = ibuf.slice(0, n); ibuf = ibuf.slice(n); return c; }
-function readU8()  { const v = ibuf[0]; ibuf = ibuf.slice(1); return v; }
-function readU16() { const v = (ibuf[0]<<8)|ibuf[1]; ibuf = ibuf.slice(2); return v; }
-function readU32() { const v = ((ibuf[0]<<24)|(ibuf[1]<<16)|(ibuf[2]<<8)|ibuf[3])>>>0; ibuf = ibuf.slice(4); return v; }
-function readS32() { const v = new DataView(ibuf.buffer, ibuf.byteOffset, 4).getInt32(0, false); ibuf = ibuf.slice(4); return v; }
-
-function sendRaw(data) { if (ws && ws.readyState === 1) ws.send(data); }
-function sendBytes(...b) { sendRaw(new Uint8Array(b).buffer); }
-
-/* Connect */
-function vncConnect() {
-  const relay = document.getElementById('vi-relay').value.trim();
-  const code  = document.getElementById('vi-code').value.trim().replace(/-/g, '').toUpperCase();
-
-  if (!code) { toast('Enter a session code first', 'err'); return; }
-
-  if (ws) { ws.close(); }
-  ibuf = new Uint8Array(0);
-  rfbState = 'version';
-
-  const url = relay.endsWith('/') ? relay + 'vnc/' + code : relay + '/vnc/' + code;
-  document.querySelector('#vbar .vbar-info').textContent = url;
-
-  setVStatus('ing', 'Connecting…');
-  setVLoading(true, 'Opening WebSocket to relay…');
-  setSplash(true);
-
-  document.getElementById('vbtn-connect').disabled = true;
-  document.getElementById('vbtn-dc').disabled = false;
-
-  ws = new WebSocket(url, ['binary']);
-  ws.binaryType = 'arraybuffer';
-
-  ws.onopen = () => setVLoading(true, 'RFB handshake…');
-  ws.onmessage = e => { append(e.data); try { pump(); } catch(err) { toast('Protocol error: ' + err.message, 'err'); console.error(err); } };
-  ws.onerror = () => { setVStatus('err', 'Error'); setVLoading(false); toast('WebSocket error — check relay URL and code', 'err'); resetVUI(); };
-  ws.onclose = () => {
-    if (rfbState !== 'idle') { setVStatus('err', 'Disconnected'); toast('Connection closed'); }
-    rfbState = 'idle'; setVLoading(false); setSplash(true); resetVUI();
-  };
-}
-
-function vncDisconnect() {
-  if (ws) ws.close();
-  rfbState = 'idle';
-  setVStatus('', 'Disconnected');
-  setVLoading(false);
-  setSplash(true);
-  resetVUI();
-}
-
-function resetVUI() {
-  document.getElementById('vbtn-connect').disabled = false;
-  document.getElementById('vbtn-dc').disabled = true;
-  document.getElementById('vsess-label').textContent = 'No session';
-  document.getElementById('vsess-detail').textContent = '';
-}
-
-/* State machine */
-function pump() {
-  for (let i = 0; i < 200; i++) {
-    const before = ibuf.length;
-    if      (rfbState === 'version')    { if (!doVersion())   break; }
-    else if (rfbState === 'security')   { if (!doSecurity())  break; }
-    else if (rfbState === 'secresult')  { if (!doSecResult()) break; }
-    else if (rfbState === 'clientinit') { doClientInit(); }
-    else if (rfbState === 'serverinit') { if (!doServerInit()) break; }
-    else if (rfbState === 'active')     { if (!doMessage())   break; }
-    else break;
-    if (ibuf.length === before) break;
-  }
-}
-
-function doVersion() {
-  if (avail() < 12) return false;
-  const ver = new TextDecoder().decode(consume(12));
-  sendRaw(new TextEncoder().encode('RFB 003.008\n'));
-  rfbState = 'security'; return true;
-}
-
-function doSecurity() {
-  if (avail() < 2) return false;
-  const n = readU8();
-  if (n === 0) { consume(avail()); toast('Server rejected connection', 'err'); return false; }
-  if (avail() < n) return false;
-  const types = Array.from(consume(n));
-  const chosen = types.includes(1) ? 1 : types.includes(2) ? 2 : types[0];
-  sendBytes(chosen);
-  rfbState = 'secresult'; return true;
-}
-
-function doSecResult() {
-  if (avail() < 4) return false;
-  const res = readU32();
-  if (res !== 0) { let m = 'Auth failed'; if (avail() >= 4) { const l = readU32(); if (avail() >= l) m = new TextDecoder().decode(consume(l)); } toast(m, 'err'); ws.close(); return false; }
-  rfbState = 'clientinit'; return true;
-}
-
-function doClientInit() { sendBytes(1); rfbState = 'serverinit'; }
-
-function doServerInit() {
-  if (avail() < 24) return false;
-  fbW = readU16(); fbH = readU16();
-  consume(16); // pixel format
-  const nl = readU32();
-  if (avail() < nl) return false;
-  const name = new TextDecoder().decode(consume(nl));
-
-  canvas.width = fbW; canvas.height = fbH;
-  imgData = ctx.createImageData(fbW, fbH);
-  for (let i = 3; i < imgData.data.length; i += 4) imgData.data[i] = 255;
-  ctx.putImageData(imgData, 0, 0);
-
-  setSplash(false);
-  setVLoading(false);
-  setVStatus('conn', 'Connected');
-  document.getElementById('vsess-label').textContent = name || 'Remote Desktop';
-  document.getElementById('vsess-detail').textContent = `${fbW}×${fbH}`;
-  fitScreen();
-  bindInput();
-  sendPixelFormat();
-  sendEncodings();
-  reqUpdate(false);
-
-  // Save to recent
-  const code = document.getElementById('vi-code').value.trim();
-  const relay = document.getElementById('vi-relay').value.trim();
-  recentSessions = recentSessions.filter(r => r.code !== code);
-  recentSessions.unshift({ code, relay, name: name || 'Remote Desktop', ts: Date.now() });
-  recentSessions = recentSessions.slice(0, 8);
-  localStorage.setItem('deltardt_recent', JSON.stringify(recentSessions));
-  renderRecent();
-
-  fpsTimer = setInterval(() => {
-    document.getElementById('vfps').textContent = fpsCount + ' fps';
-    fpsCount = 0;
-  }, 1000);
-
-  rfbState = 'active'; return true;
-}
-
-/* Messages */
-function doMessage() {
-  if (avail() < 1) return false;
-  const t = ibuf[0];
-  if (t === 0) return doFBUpdate();
-  if (t === 2) { consume(1); return true; }
-  if (t === 3) return doCutText();
-  consume(1); return true;
-}
-
-function doFBUpdate() {
-  if (avail() < 4) return false;
-  const nr = (ibuf[2]<<8)|ibuf[3]; consume(4);
-  for (let i = 0; i < nr; i++) {
-    if (avail() < 12) return false;
-    const x = readU16(), y = readU16(), w = readU16(), h = readU16();
-    const enc = readS32();
-    if (enc === 0) {          // Raw
-      const b = w*h*4; if (avail() < b) return false;
-      copyRaw(consume(b), x, y, w, h);
-    } else if (enc === 2) {   // RRE
-      if (avail() < 8) return false;
-      const ns = readU32(), bg = consume(4);
-      fillRect(x,y,w,h,bg[2],bg[1],bg[0]);
-      if (avail() < ns*12) return false;
-      for (let s=0;s<ns;s++) { const fg=consume(4),sx=readU16(),sy=readU16(),sw=readU16(),sh=readU16(); fillRect(x+sx,y+sy,sw,sh,fg[2],fg[1],fg[0]); }
-    } else if (enc === 5) {   // Hextile
-      if (!doHextile(x,y,w,h)) return false;
-    } else if (enc === -223) { // DesktopSize
-      fbW=w; fbH=h; canvas.width=w; canvas.height=h;
-      imgData=ctx.createImageData(w,h);
-      document.getElementById('vsess-detail').textContent=`${w}×${h}`;
-      fitScreen();
-    }
-  }
-  ctx.putImageData(imgData, 0, 0); fpsCount++;
-  reqUpdate(true); return true;
-}
-
-function copyRaw(d, x, y, w, h) {
-  for (let r=0;r<h;r++) for (let c=0;c<w;c++) {
-    const si=(r*w+c)*4, di=((y+r)*fbW+(x+c))*4;
-    imgData.data[di]=d[si+2]; imgData.data[di+1]=d[si+1]; imgData.data[di+2]=d[si]; imgData.data[di+3]=255;
-  }
-}
-
-function fillRect(x,y,w,h,r,g,b) {
-  for (let row=0;row<h;row++) for (let col=0;col<w;col++) {
-    const di=((y+row)*fbW+(x+col))*4;
-    imgData.data[di]=r; imgData.data[di+1]=g; imgData.data[di+2]=b; imgData.data[di+3]=255;
-  }
-}
-
-function doHextile(rx,ry,rw,rh) {
-  let bgR=0,bgG=0,bgB=0,fgR=0,fgG=0,fgB=0;
-  const cols=Math.ceil(rw/16), rows=Math.ceil(rh/16);
-  for (let tr=0;tr<rows;tr++) for (let tc=0;tc<cols;tc++) {
-    if (avail()<1) return false;
-    const se=readU8(), tx=rx+tc*16, ty=ry+tr*16, tw=Math.min(16,rw-tc*16), th=Math.min(16,rh-tr*16);
-    if (se&1) { const b=tw*th*4; if(avail()<b) return false; copyRaw(consume(b),tx,ty,tw,th); continue; }
-    if (se&2) { if(avail()<4) return false; const c=consume(4); bgR=c[2]; bgG=c[1]; bgB=c[0]; }
-    if (se&4) { if(avail()<4) return false; const c=consume(4); fgR=c[2]; fgG=c[1]; fgB=c[0]; }
-    fillRect(tx,ty,tw,th,bgR,bgG,bgB);
-    if (se&8) {
-      if(avail()<1) return false;
-      const ns=readU8();
-      for (let s=0;s<ns;s++) {
-        let r=fgR,g=fgG,b=fgB;
-        if (se&16) { if(avail()<4) return false; const c=consume(4); r=c[2]; g=c[1]; b=c[0]; }
-        if(avail()<2) return false;
-        const xy=readU8(),wh=readU8(),sx=(xy>>4)&0xf,sy=xy&0xf,sw=((wh>>4)&0xf)+1,sh=(wh&0xf)+1;
-        fillRect(tx+sx,ty+sy,sw,sh,r,g,b);
-      }
-    }
-  }
-  return true;
-}
-
-function doCutText() {
-  if(avail()<8) return false;
-  consume(4); const l=readU32(); if(avail()<l) return false;
-  document.getElementById('vclip-text').value = new TextDecoder().decode(consume(l));
-  return true;
-}
-
-/* Send messages */
-function sendPixelFormat() {
-  const b = new DataView(new ArrayBuffer(20));
-  b.setUint8(0,0); b.setUint8(4,32); b.setUint8(5,24);
-  b.setUint8(6,0); b.setUint8(7,1);
-  b.setUint16(8,255,false); b.setUint16(10,255,false); b.setUint16(12,255,false);
-  b.setUint8(14,16); b.setUint8(15,8); b.setUint8(16,0);
-  sendRaw(b.buffer);
-}
-
-function sendEncodings() {
-  const encs = [5,2,0,-223]; // Hextile, RRE, Raw, DesktopSize
-  const b = new DataView(new ArrayBuffer(4+encs.length*4));
-  b.setUint8(0,2); b.setUint16(2,encs.length,false);
-  encs.forEach((e,i) => b.setInt32(4+i*4,e,false));
-  sendRaw(b.buffer);
-}
-
-function reqUpdate(inc) {
-  const b = new DataView(new ArrayBuffer(10));
-  b.setUint8(0,3); b.setUint8(1,inc?1:0);
-  b.setUint16(2,0,false); b.setUint16(4,0,false);
-  b.setUint16(6,fbW,false); b.setUint16(8,fbH,false);
-  sendRaw(b.buffer);
-}
-
-function sendSpecialKey(sym, down=true) {
-  const b = new DataView(new ArrayBuffer(8));
-  b.setUint8(0,4); b.setUint8(1,down?1:0); b.setUint32(4,sym,false);
-  sendRaw(b.buffer);
-  if (down) setTimeout(() => sendSpecialKey(sym,false), 80);
-}
-
-function sendCAD() {
-  if (rfbState!=='active') { toast('Not connected','err'); return; }
-  const keys = [0xffe3,0xffe9,0xffff];
-  keys.forEach(k => sendSpecialKey(k,true));
-  setTimeout(() => keys.reverse().forEach(k => sendSpecialKey(k,false)), 80);
-}
-
-function sendClipboard() {
-  const text = document.getElementById('vclip-text').value;
-  const enc = new TextEncoder().encode(text);
-  const b = new DataView(new ArrayBuffer(8+enc.length));
-  b.setUint8(0,6); b.setUint32(4,enc.length,false);
-  new Uint8Array(b.buffer,8).set(enc);
-  sendRaw(b.buffer);
-  toast('Clipboard sent to remote', 'good');
-}
-
-/* Input binding */
-function bindInput() {
-  canvas.onmousemove = onMM;
-  canvas.onmousedown = onMD;
-  canvas.onmouseup   = onMU;
-  canvas.oncontextmenu = e => e.preventDefault();
-  canvas.onwheel = onWheel;
-  window.onkeydown = onKD;
-  window.onkeyup   = onKU;
-}
-
-function cc(e) {
-  const r = canvas.getBoundingClientRect();
-  return { x: Math.round((e.clientX-r.left)*(fbW/r.width)), y: Math.round((e.clientY-r.top)*(fbH/r.height)) };
-}
-
-function sendPtr(e) {
-  const {x,y} = cc(e);
-  const b = new DataView(new ArrayBuffer(6));
-  b.setUint8(0,5); b.setUint8(1,pointerBtns); b.setUint16(2,x,false); b.setUint16(4,y,false);
-  sendRaw(b.buffer);
-}
-
-function onMM(e) { if(rfbState==='active') sendPtr(e); }
-function onMD(e) { if(rfbState!=='active') return; pointerBtns|=(e.button===2?4:1<<e.button); sendPtr(e); }
-function onMU(e) { if(rfbState!=='active') return; pointerBtns&=~(e.button===2?4:1<<e.button); sendPtr(e); }
-function onWheel(e) {
-  if(rfbState!=='active') return; e.preventDefault();
-  const {x,y}=cc(e), btn=e.deltaY<0?8:16;
-  const b=new DataView(new ArrayBuffer(6));
-  b.setUint8(0,5); b.setUint8(1,btn); b.setUint16(2,x,false); b.setUint16(4,y,false);
-  sendRaw(b.buffer);
-  b.setUint8(1,0); sendRaw(b.buffer);
-}
-
-const KM = {
-  Backspace:0xff08,Tab:0xff09,Enter:0xff0d,Escape:0xff1b,Delete:0xffff,
-  Home:0xff50,End:0xff57,PageUp:0xff55,PageDown:0xff56,
-  ArrowLeft:0xff51,ArrowUp:0xff52,ArrowRight:0xff53,ArrowDown:0xff54,
-  Insert:0xff63,F1:0xffbe,F2:0xffbf,F3:0xffc0,F4:0xffc1,F5:0xffc2,F6:0xffc3,
-  F7:0xffc4,F8:0xffc5,F9:0xffc6,F10:0xffc7,F11:0xffc8,F12:0xffc9,
-  ShiftLeft:0xffe1,ShiftRight:0xffe2,ControlLeft:0xffe3,ControlRight:0xffe4,
-  AltLeft:0xffe9,AltRight:0xffea,MetaLeft:0xffeb,MetaRight:0xffec,
-  CapsLock:0xffe5,
-};
-
-function ksym(e) {
-  if(KM[e.code]) return KM[e.code];
-  if(e.key.length===1) return e.key.codePointAt(0);
-  return null;
-}
-
-function sendKey(sym, down) {
-  const b=new DataView(new ArrayBuffer(8));
-  b.setUint8(0,4); b.setUint8(1,down?1:0); b.setUint32(4,sym,false);
-  sendRaw(b.buffer);
-}
-
-function onKD(e) {
-  if(rfbState!=='active') return;
-  if(e.target!==document.body&&e.target!==canvas) return;
-  const s=ksym(e); if(!s) return;
-  e.preventDefault(); sendKey(s,true);
-}
-
-function onKU(e) {
-  if(rfbState!=='active') return;
-  const s=ksym(e); if(!s) return; sendKey(s,false);
-}
-
-/* UI helpers */
-function fitScreen() {
-  const wrap=document.getElementById('vcanvas-wrap');
-  const mw=wrap.clientWidth-32, mh=wrap.clientHeight-32;
-  if(!fbW||!fbH) return;
-  currentScale=Math.min(mw/fbW,mh/fbH,1);
-  canvas.style.width=Math.round(fbW*currentScale)+'px';
-  canvas.style.height=Math.round(fbH*currentScale)+'px';
-}
-
-function toggleFS() {
-  if(!document.fullscreenElement) document.getElementById('vmain').requestFullscreen();
-  else document.exitFullscreen();
-}
-
-function toggleClip() { document.getElementById('vclip').classList.toggle('open'); }
-function setQuality(q) { /* Adjust request rate */ }
-window.addEventListener('resize',()=>{ if(rfbState==='active') fitScreen(); });
-
-/* Recent sessions */
-function renderRecent() {
-  const list=document.getElementById('recent-list');
-  if(!recentSessions.length) { list.innerHTML='<div style="padding:16px;font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center">No recent sessions</div>'; return; }
-  list.innerHTML=recentSessions.map(r=>`
-    <div class="rec-item" onclick="loadRecent('${r.code}','${r.relay}')">
-      <div class="rec-icon">🖥</div>
-      <div class="rec-meta">
-        <div class="rec-name">${r.name}</div>
-        <div class="rec-addr">${r.code}</div>
-      </div>
-    </div>`).join('');
-}
-
-function loadRecent(code,relay) {
-  document.getElementById('vi-code').value=code;
-  document.getElementById('vi-relay').value=relay;
-  toast('Code loaded — click Connect');
-}
-
-renderRecent();
-
-/* Auto-focus code input when switching to remote page */
-document.getElementById('vi-code').addEventListener('keydown', e => {
-  if(e.key==='Enter') vncConnect();
-});
-
-/* Handle Enter key on code input */
-document.querySelectorAll('#vconn-panel input').forEach(inp => {
-  inp.addEventListener('keydown', e => { if(e.key==='Enter') vncConnect(); });
-});
-</script>
 </body>
 </html>
