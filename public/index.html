@@ -1,89 +1,460 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeltaRDT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;700;900&family=Barlow+Condensed:wght@700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="js/index.js" defer></script>
+</head>
+<body>
 
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/12.11.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/12.11.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/12.11.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/12.11.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/12.11.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/12.11.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/12.11.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/12.11.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/12.11.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/12.11.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
-
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
+<nav>
+  <a href="#" class="nav-logo" onclick="showPage('home',this)">
+    Delta<span>RDT</span>
+  </a>
+  <ul>
+    <li><a href="#" onclick="showPage('home',this);scrollTo('#how')">How it works</a></li>
+    <li><a href="#" onclick="showPage('home',this);scrollTo('#download')">Download</a></li>
+    <li><a href="#" onclick="showPage('home',this);scrollTo('#setup')">Setup guide</a></li>
+    <li><a href="#" onclick="showPage('home',this);scrollTo('#faq')">FAQ</a></li>
+    <li><a href="#" onclick="showPage('remote',this)" style="color:var(--cyan)">🖥 Connect now</a></li>
+  </ul>
+  <button class="nav-cta" onclick="showPage('remote')">Connect Now</button>
+</nav>
+<div id="p-home" class="page active">
+<section id="hero">
+  <div class="hero-eyebrow">Open Source Remote Desktop</div>
+  <h1>
+    Control any<br>
+    <span class="acc">PC</span>
+    <span class="faded"> from</span> any<br>
+    browser.
+  </h1>
+  <p class="hero-sub">
+    Install the <strong>DeltaRDT agent</strong> on the PC you want to share.
+    Anyone with a code connects instantly from any browser, no port forwarding.
+  </p>
+  <div class="hero-btns">
+    <button class="btn-p" onclick="openDlModal()">↓ Download Agent</button>
+    <button class="btn-s" onclick="showPage('remote')">🖥 Connect to a PC</button>
+  </div>
+  <div class="os-badges">
+    <div class="os-badge"><span class="os-dot"></span>Windows 10/11</div>
+    <div class="os-badge"><span class="os-dot"></span>macOS 12+</div>
+    <div class="os-badge"><span class="os-dot"></span>Linux / Ubuntu</div>
+    <div class="os-badge"><span class="os-dot"></span>Free forever</div>
+  </div>
+</section>
+<div id="stats">
+  <div class="stat"><div class="stat-num">3.8</div><div class="stat-lbl">RFB Protocol</div></div>
+  <div class="stat"><div class="stat-num">&lt;50ms</div><div class="stat-lbl">Typical latency</div></div>
+  <div class="stat"><div class="stat-num">256-bit</div><div class="stat-lbl">AES transport</div></div>
+  <div class="stat"><div class="stat-num">0</div><div class="stat-lbl">Open ports needed</div></div>
+  <div class="stat"><div class="stat-num">MIT</div><div class="stat-lbl">Open source</div></div>
+</div>
+<div id="how" class="section-full">
+  <div class="inner">
+    <div class="reveal">
+      <div class="s-label">How it works</div>
+      <h2>Three steps<br></h2>
+      <p class="s-intro">No router config. No static IP. The program handles everything through our encrypted relay.</p>
     </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
+    <div class="how-grid stagger" style="margin-top:52px">
+      <div class="how-step" data-n="1">
+        <h3>Download and run the agent</h3>
+        <p>Install DeltaRDT on the Windows, Mac, or Linux machine you want to access remotely. Double-click to run; which will stay running in the background (or in your system tray).</p>
+        <span class="role-tag tag-host">On the host PC</span>
+      </div>
+      <div class="how-step" data-n="2">
+        <h3>Get your session code</h3>
+        <p>The agent shows a short 6-character session code. Share it with whoever needs access or save it for yourself to reconnect later.</p>
+        <span class="role-tag tag-both">Shown on screen</span>
+      </div>
+      <div class="how-step" data-n="3">
+        <h3>Connect from any browser</h3>
+        <p>Click <strong>Connect Now</strong> above - on a Chromebook, phone, or any other PC. Enter the code and you're viewing the remote desktop.</p>
+        <span class="role-tag tag-view">On the viewer device</span>
+      </div>
+    </div>
+    <div class="reveal" style="margin-top:52px">
+      <div style="background:var(--ink);border:1px solid var(--steel);border-radius:14px;padding:32px;overflow-x:auto">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:20px;letter-spacing:2px;text-transform:uppercase">Architecture overview</div>
+        <div style="display:flex;align-items:center;gap:0;min-width:500px">
+          <div style="flex:1;background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);border-radius:10px;padding:18px 16px;text-align:center">
+            <div style="font-size:22px;margin-bottom:6px">🖥</div>
+            <div style="font-family:var(--head);font-weight:700;font-size:14px;color:var(--white)">Your PC</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--mute);margin-top:4px">DeltaRDT Agent<br>RFB server :5900</div>
+          </div>
+          <div style="flex:0 0 80px;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim)">outbound WSS</div>
+            <div style="height:1px;width:100%;background:linear-gradient(90deg,var(--cyan),var(--cyan2));position:relative">
+              <div style="position:absolute;right:-4px;top:-4px;width:0;height:0;border-left:8px solid var(--cyan2);border-top:4px solid transparent;border-bottom:4px solid transparent"></div>
+            </div>
+          </div>
+          <div style="flex:1;background:rgba(170,255,0,.05);border:1px solid rgba(170,255,0,.2);border-radius:10px;padding:18px 16px;text-align:center">
+            <div style="font-size:22px;margin-bottom:6px">☁️</div>
+            <div style="font-family:var(--head);font-weight:700;font-size:14px;color:var(--white)">DeltaRDT Relay</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--mute);margin-top:4px">WebSocket bridge<br>deltardt.app :443</div>
+          </div>
+          <div style="flex:0 0 80px;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim)">WSS browser</div>
+            <div style="height:1px;width:100%;background:linear-gradient(90deg,var(--lime),rgba(170,255,0,.5));position:relative">
+              <div style="position:absolute;right:-4px;top:-4px;width:0;height:0;border-left:8px solid rgba(170,255,0,.5);border-top:4px solid transparent;border-bottom:4px solid transparent"></div>
+            </div>
+          </div>
+          <div style="flex:1;background:rgba(255,170,0,.05);border:1px solid rgba(255,170,0,.2);border-radius:10px;padding:18px 16px;text-align:center">
+            <div style="font-size:22px;margin-bottom:6px">📱</div>
+            <div style="font-family:var(--head);font-weight:700;font-size:14px;color:var(--white)">Your Browser</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--mute);margin-top:4px">Chromebook/ phone<br>No install needed</div>
+          </div>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:20px;flex-wrap:wrap">
+          <div style="font-size:12px;color:var(--dim)">Both sides connect <em>outbound</em>, no port forwarding needed</div>
+          <div style="font-size:12px;color:var(--dim)">Traffic encrypted end-to-end via TLS</div>
+          <div style="font-size:12px;color:var(--dim)">Works from any network, any country</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<section id="download" class="section reveal">
+  <div class="s-label">Download</div>
+  <h2>Pick your<br><span class="acc">platform.</span></h2>
+  <p class="s-intro">One small agent. No admin rights required on Windows. Installs in 30 seconds.</p>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+  <div class="dl-grid stagger">
+    <div class="dl-card feat" onclick="openDlModal('windows')">
+      <div class="dl-name">Windows</div>
+      <div class="dl-desc">Windows 10-11</div>
+      <div class="dl-ver">v1.0.0 · 4.2 MB</div>
+      <a class="dl-btn" href="deltardt-setup.exe" onclick="event.stopPropagation()">Installer .exe <span class="dl-sz">↓ 4.2 MB</span></a>
+      <a class="dl-btn" href="deltardt-portable.zip" onclick="event.stopPropagation()" style="font-size:12px">Portable .zip <span class="dl-sz">↓ 3.1 MB</span></a>
+    </div>
+    <div class="dl-card" onclick="openDlModal('mac')">
+      <div class="dl-name">macOS</div>
+      <div class="dl-desc">Universal binary, Intel and Apple Silicon. Requires macOS 12 Monterey or later</div>
+      <div class="dl-ver">v1.0.0 · 6.8 MB</div>
+      <a class="dl-btn" href="DeltaRDT.dmg" onclick="event.stopPropagation()">DeltaRDT.dmg <span class="dl-sz">↓ 6.8 MB</span></a>
+    </div>
+    <div class="dl-card" onclick="openDlModal('linux')">
+      <div class="dl-name">Linux</div>
+      <div class="dl-desc">Debian .deb package or a standalone Python script. X11 and Wayland support.</div>
+      <div class="dl-ver">v1.0.0 · 2.1 MB</div>
+      <a class="dl-btn" href="deltardt.deb" onclick="event.stopPropagation()">.deb package <span class="dl-sz">↓ 2.1 MB</span></a>
+      <a class="dl-btn" href="deltardt.py" onclick="event.stopPropagation()" style="font-size:12px">Python script <span class="dl-sz">↓ 48 KB</span></a>
+    </div>
+  </div>
+</section>
+<div id="setup" class="section-full">
+  <div class="inner">
+    <div class="reveal">
+      <div class="s-label">Setup guide</div>
+      <h2>Get connected<br><span class="acc">in minutes</span></h2>
+      <p class="s-intro">Step-by-step instructions for every platform. Takes about 2 minutes from download to connected.</p>
+    </div>
 
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
-        }
-      });
-    </script>
-  </body>
+    <div class="setup-tabs">
+      <button class="tab-btn on" onclick="switchTab('win',this)">🪟 Windows</button>
+      <button class="tab-btn" onclick="switchTab('mac',this)"> macOS</button>
+      <button class="tab-btn" onclick="switchTab('lnx',this)">🐧 Linux</button>
+      <button class="tab-btn" onclick="switchTab('cnx',this)">🌐 Connecting</button>
+      <button class="tab-btn" onclick="switchTab('slf',this)">⚙️ Self-host</button>
+    </div>
+=
+    <div class="tab-content on" id="tc-win">
+      <div class="setup-steps">
+        <div class="ss"><div class="ss-num">1</div><div class="ss-body">
+          <h4>Download and run the installer</h4>
+          <p>Download <strong>deltardt-setup.exe</strong> and double-click it. Windows SmartScreen may warn about an unknown publisher. Click <strong>"More info" → "Run anyway"</strong>. This is normal for unsigned software.</p>
+          <div class="info-box warn">=<p class="ib-text">Can't install? Use the portable program instead; extract and double-click <code>deltardt.exe</code>, no installation needed, no admin rights.</p></div>
+        </div></div>
+        <div class="ss"><div class="ss-num">2</div><div class="ss-body">
+          <h4>Allow through Windows Firewall</h4>
+          <p>A firewall prompt appears on first run. Click <strong>Allow access</strong> for both Private and Public networks. This lets the agent reach the relay server outbound; no inbound ports are opened.</p>
+          <div class="info-box">=<p class="ib-text">If the prompt doesn't appear, go to <strong>Windows Security → Firewall → Allow an app</strong> and add DeltaRDT manually.</p></div>
+        </div></div>
+        <div class="ss"><div class="ss-num">3</div><div class="ss-body">
+          <h4>Your session code appears</h4>
+          <p>A tray icon appears in the system tray (bottom-right). The DeltaRDT window shows your <strong>session code</strong>, e.g. <code style="font-family:var(--mono);background:rgba(0,229,255,.1);padding:2px 7px;border-radius:4px;font-size:13px">ABC-123</code>. Share this with whoever needs to connect.</p>
+          <div class="info-box ok">=<p class="ib-text">Codes refresh every 24 hours. Right-click the tray icon → <strong>New Code</strong> to generate a fresh one anytime.</p></div>
+        </div></div>
+        <div class="ss"><div class="ss-num">4</div><div class="ss-body">
+          <h4>Optional: start with Windows</h4>
+          <p>Right-click the tray icon → <strong>Start with Windows</strong> to always have DeltaRDT running in the background so you can connect remotely even after a reboot.</p>
+        </div></div>
+        <div class="ss"><div class="ss-num">5</div><div class="ss-body">
+          <h4>Share your code and connect</h4>
+          <p>On the Chromebook (or any other browser), go to the <strong>Connect Now</strong> page on this site. Enter the session code in the box and click Connect. You'll see the remote desktop in about 2–3 seconds.</p>
+          <button class="btn-p" style="margin-top:8px;font-size:13px;padding:10px 22px" onclick="showPage('remote')">→ Open Connect page</button>
+        </div></div>
+      </div>
+    </div>
+    <div class="tab-content" id="tc-mac">
+      <div class="setup-steps">
+        <div class="ss"><div class="ss-num">1</div><div class="ss-body">
+          <h4>Download and open the .dmg</h4>
+          <p>Download <strong>DeltaRDT.dmg</strong>, open it, and drag DeltaRDT into your <strong>Applications</strong> folder. Then launch it from Applications or Spotlight.</p>
+          <div class="info-box warn"><p class="ib-text">macOS may say the app is from an "unidentified developer". Go to <strong>System Settings → Privacy & Security</strong> and click <strong>"Open Anyway"</strong>.</p></div>
+        </div></div>
+        <div class="ss"><div class="ss-num">2</div><div class="ss-body">
+          <h4>Grant Screen Recording permission</h4>
+          <p>On first launch macOS prompts for <strong>Screen Recording</strong> access. This is required to capture your screen. If you miss the prompt, go to <strong>System Settings → Privacy & Security → Screen Recording</strong> and enable DeltaRDT.</p>
+        </div></div>
+        <div class="ss"><div class="ss-num">3</div><div class="ss-body">
+          <h4>Grant Accessibility permission</h4>
+          <p>To allow keyboard and mouse input from the remote side, also enable DeltaRDT under <strong>Privacy & Security → Accessibility</strong>. Both permissions are needed for full control.</p>
+        </div></div>
+        <div class="ss"><div class="ss-num">4</div><div class="ss-body">
+          <h4>Session code in the menu bar</h4>
+          <p>DeltaRDT appears in the menu bar (top-right). Click it to see your code. Share it and the viewer can connect from <strong>Connect Now</strong> above.</p>
+          <button class="btn-p" style="margin-top:8px;font-size:13px;padding:10px 22px" onclick="showPage('remote')">→ Open Connect page</button>
+        </div></div>
+      </div>
+    </div>
+    <div class="tab-content" id="tc-lnx">
+      <div class="setup-steps">
+        <div class="ss"><div class="ss-num">1</div><div class="ss-body">
+          <h4>Install Python dependencies</h4>
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">sudo apt update && sudo apt install python3-pip</span><br><span class="kw">pip3 install mss pyautogui websockets Pillow</span></div>
+          <div class="info-box"><p class="ib-text">On Fedora/RHEL: <code>sudo dnf install python3-pip</code> · On Arch (btw): <code>sudo pacman -S python-pip</code></p></div>
+        </div></div>
+        <div class="ss"><div class="ss-num">2</div><div class="ss-body">
+          <h4>Download and run the agent</h4>
+          <p>Option A: .deb package (Ubuntu/Debian):</p>
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">sudo dpkg -i</span> deltardt_1.0.0_amd64.deb<br><span class="kw">deltardt</span></div>
+          <p style="margin-top:12px">Option B: Python script (any distro):</p>
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">python3</span> deltardt.py</div>
+        </div></div>
+        <div class="ss"><div class="ss-num">3</div><div class="ss-body">
+          <h4>Wayland users: set DISPLAY environment var</h4>
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">DISPLAY=:0</span> python3 deltardt.py</div>
+          <div class="info-box warn"><p class="ib-text">Pure Wayland without XWayland may limit screen capture. Ubuntu 22+ has XWayland enabled by default.</p></div>
+        </div></div>
+        <div class="ss"><div class="ss-num">4</div><div class="ss-body">
+          <h4>Session code in terminal or GUI</h4>
+          <p>The agent prints your code to the terminal and opens a small GTK window. Share the code and connect from the browser.</p>
+          <button class="btn-p" style="margin-top:8px;font-size:13px;padding:10px 22px" onclick="showPage('remote')">→ Open Connect page</button>
+        </div></div>
+      </div>
+    </div>
+    <div class="tab-content" id="tc-cnx">
+      <div class="setup-steps">
+        <div class="ss"><div class="ss-num">1</div><div class="ss-body">
+          <h4>No download needed on the viewer side</h4>
+          <p>The <strong>Connect Now</strong> viewer runs entirely in your browser; on a Chromebook, phone, tablet, or another PC. Just open this website and click <strong>Connect Now</strong> in the nav bar.</p>
+          <button class="btn-p" style="margin-top:8px;font-size:13px;padding:10px 22px" onclick="showPage('remote')">→ Open Connect page</button>
+        </div></div>
+        <div class="ss"><div class="ss-num">2</div><div class="ss-body">
+          <h4>Enter the session code</h4>
+          <p>Type the <strong>session code</strong> shown by the host PC into the Session Code box. The format is 6 characters like <code style="font-family:var(--mono);background:rgba(0,229,255,.1);padding:2px 7px;border-radius:4px;font-size:13px">AB3X92</code>. Leave the relay URL as the default unless you're self-hosting.</p>
+          <div class="info-box"><p class="ib-text">The relay field defaults to <code>wss://relay.deltardt.app</code>. Only change this if you're running your own relay server.</p></div>
+        </div></div>
+        <div class="ss"><div class="ss-num">3</div><div class="ss-body">
+          <h4>You're in: full keyboard and mouse control</h4>
+          <p>The remote desktop appears in the browser window. Click to move the mouse, type to send keystrokes. The toolbar lets you send <strong>Ctrl+Alt+Del</strong>, sync clipboard text, fit the screen, or go fullscreen.</p>
+          <div class="info-box ok"><p class="ib-text">On Chromebook: press <strong>Ctrl+Shift+F</strong> to go fullscreen for the best experience. All keyboard shortcuts are forwarded correctly to the remote PC.</p></div>
+        </div></div>
+        <div class="ss"><div class="ss-num">4</div><div class="ss-body">
+          <h4>Adjust quality for your connection speed</h4>
+          <p>Use the <strong>Quality</strong> dropdown in the viewer toolbar to trade image quality for speed. <strong>Low</strong> works great on mobile data or slow ahh hotel Wi-Fi. <strong>Full</strong> is best on a fast home network.</p>
+        </div></div>
+      </div>
+    </div>
+    <div class="tab-content" id="tc-slf">
+      <div class="setup-steps">
+        <div class="ss"><div class="ss-num">1</div><div class="ss-body">
+          <h4>Why self-host?</h4>
+          <p>If you want <strong>zero third-party involvement</strong>, or you need to support many simultaneous sessions, you can run the relay server on your own VPS. A $4/month DigitalOcean or free-forever Oracle server handles hundreds of concurrent sessions.</p>
+        </div></div>
+        <div class="ss"><div class="ss-num">2</div><div class="ss-body">
+          <h4>Clone the repo and install</h4>
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">git clone</span>https://github.com/nicepeople67/Delta-RDT<br><span class="kw">cd</span> deltardt<br><span class="kw">pip3 install</span> websockets</div>
+        </div></div>
+        <div class="ss"><div class="ss-num">3</div><div class="ss-body">
+          <h4>Run the relay server</h4>
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><br><span class="kw">python3</span> relay_server.py --ws-port <span class="st">443</span> --api-port <span class="st">444</span></div>
+          <div class="info-box"><p class="ib-text">Use <code>nginx</code> as a reverse proxy in front to handle TLS certificates (Let's Encrypt). This gives you <code>wss://</code> instead of <code>ws://</code>, required for HTTPS pages.</p></div>
+        </div></div>
+        <div class="ss"><div class="ss-num">4</div><div class="ss-body">
+          <h4>Register a session and get a token</h4>
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="cm"># Create a session pointing to the local VNC server</span><br><span class="kw">curl</span> -X POST http://your-server:444/api/sessions \<br>  -H <span class="st">'Content-Type: application/json'</span> \<br>  -d <span class="st">'{"host":"127.0.0.1","port":5900,"label":"My PC"}'</span><br><span class="cm"># → {"token": "abc123def456"}</span></div>
+          <p>Enter the token in the <strong>Session Code</strong> field in the viewer, and set the relay URL to <code>wss://your-server</code>.</p>
+        </div></div>
+        <div class="ss"><div class="ss-num">5</div><div class="ss-body">
+          <h4>Point the agent at your relay</h4>
+          <p>Launch the agent with your relay address:</p>
+          <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">python3</span> deltardt.py --relay wss://your-server --port <span class="st">5900</span></div>
+          <div class="info-box ok"><p class="ib-text">Your screen data now flows entirely through your own server. DeltaRDT's relay never sees it.</p></div>
+        </div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<section id="features" class="section">
+  <div class="reveal">
+    <div class="s-label">Features</div>
+    <h2>Built right,<br><span class="acc">not bolted on.</span></h2>
+  </div>
+  <div class="feat-grid stagger">
+    <div class="feat"><h3>End-to-end encrypted</h3><p>All traffic is TLS-encrypted via the relay. Your screen data is never stored or inspected on our servers.</p></div>
+    <div class="feat"><h3>Hextile encoding</h3><p>Our custom VNC server uses Hextile tile compression; only changed screen regions are sent each frame.</p></div>
+    <div class="feat"><h3>Works across networks</h3><p>Connect from a Chromebook at a coffee shop to a PC at home. Different networks, different ISPs? no problem.</p></div>
+    <div class="feat"><h3>Clipboard sync</h3><p>Copy on the remote, paste in the browser. Or vice versa. Bidirectional text clipboard sync built in.</p></div>
+    <div class="feat"><h3>Full keyboard and mouse</h3><p>Every key (Ctrl, Alt, Win/Cmd, F-keys, special characters) is forwarded to the remote machine.</p></div>
+    <div class="feat"><h3>Open source and self-hostable</h3><p>BSD 3-Clause license. Audit the code, run your own relay, or contribute back.</p></div>
+  </div>
+</section>
+<section id="faq" class="section" style="max-width:740px">
+  <div class="reveal" style="text-align:center;margin-bottom:44px">
+    <div class="s-label" style="justify-content:center;display:flex">FAQ</div>
+    <h2>Questions?<br><span class="acc">Answered.</span></h2>
+  </div>
+  <div class="reveal">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Is DeltaRDT really free?<span class="faq-chev">▾</span></button>
+      <div class="faq-a"><p>Yes, it is fully free for personal use. We run the relay server (or you can self-host it). The core product stays free forever.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Can people connect without my knowledge?<span class="faq-chev">▾</span></button>
+      <div class="faq-a"><p>No. The session code is only active while the agent is running. By default a permission prompt appears on the host PC before each new connection. You can also require a password for extra security.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Does this work from a different country / network?<span class="faq-chev">▾</span></button>
+      <div class="faq-a"><p>Yes, that's the whole point. The relay server sits in the middle, so it doesn't matter if the host and viewer are on different ISPs, using ISPs that use CGNAT, or on different continents. Both sides just need internet access.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Does this work through a company firewall / VPN?<span class="faq-chev">▾</span></button>
+      <div class="faq-a"><p>Usually yes. The agent uses outbound WebSocket over port 443 (same as HTTPS), which most firewalls permit. Strict corporate VPNs that do deep packet inspection may block WebSocket. Check with your IT team.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Is my screen data stored anywhere?<span class="faq-chev">▾</span></button>
+      <div class="faq-a"><p>No. The relay just forwards raw encrypted bytes between the two sides - it can't see what's on your screen. No recordings, no logs of screen content. <a href="#">Self-host the relay</a> for complete control.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How is this different from TeamViewer or AnyDesk?<span class="faq-chev">▾</span></button>
+      <div class="faq-a"><p>TeamViewer and AnyDesk are proprietary closed-source apps with free-tier restrictions. DeltaRDT is fully open source (MIT), the protocol is documented, you can self-host everything, and the viewer needs zero install, just a browser.</p></div>
+    </div>
+  </div>
+</section>
+<footer>
+  <div class="foot-logo">Delta<span>RDT</span></div>
+  <ul class="foot-links">
+    <li><a href="#">GitHub</a></li>
+    <li><a href="#">Docs</a></li>
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">Terms</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+  <div class="foot-copy">© 2025 DeltaRDT · MIT License · Built with Python and vanilla JS · No trackers, no ads, no telemetry</div>
+</footer>
+
+</div>
+<div id="p-remote" class="page">
+
+  <div id="viewer-shell">
+    <div id="vbar">
+      <div class="vbar-logo"><span>Delta</span>RDT</div>
+      <div class="vbar-sep"></div>
+      <div class="vbar-info">RFB 3.8 · WebSocket relay</div>
+      <button onclick="showPage('home')" style="margin-left:12px;padding:5px 12px;background:transparent;border:1px solid var(--steel);border-radius:5px;font-family:var(--mono);font-size:11px;color:var(--mute);cursor:pointer" class="vt-btn">← Back to site</button>
+      <div id="vpill">
+        <div id="vdot"></div>
+        <span id="vstatus-text">Disconnected</span>
+      </div>
+    </div>
+    <div id="vsidebar">
+      <div class="vs-sec">Connect</div>
+      <div id="vconn-panel">
+        <div class="vf">
+          <label>Relay URL</label>
+          <input type="text" id="vi-relay" value="wss://relay.deltardt.app" placeholder="wss://relay.deltardt.app">
+        </div>
+        <div class="vf">
+          <label>Session code</label>
+          <input type="text" id="vi-code" placeholder="AB3-X92" maxlength="16" style="font-size:16px;letter-spacing:2px;text-transform:uppercase">
+        </div>
+        <div class="vf">
+          <label>Passphrase (if set)</label>
+          <input type="password" id="vi-pass" placeholder="optional">
+        </div>
+        <button id="vbtn-connect" onclick="vncConnect()">Connect</button>
+      </div>
+
+      <div class="vs-sec">Recent sessions</div>
+      <div class="recent-list" id="recent-list">
+        <div style="padding:16px;font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center">No recent sessions</div>
+      </div>
+
+      <div class="vs-toolbar">
+        <button class="vs-tool" onclick="sendCAD()">Ctrl+Alt+Del</button>
+        <button class="vs-tool" onclick="toggleClip()">Clipboard</button>
+      </div>
+    </div>
+    <div id="vmain">
+      <div id="vtoolbar">
+        <span id="vsess-label" style="font-size:13px;font-weight:700;color:var(--white)">No session</span>
+        <span id="vsess-detail" style="font-family:var(--mono);font-size:11px;color:var(--mute)"></span>
+        <div class="vt-sep"></div>
+        <button class="vt-btn" onclick="sendSpecialKey(0xff13)">⏸ Pause</button>
+        <button class="vt-btn" onclick="sendSpecialKey(0xff61)">❖ Super</button>
+        <select id="vquality" onchange="setQuality(this.value)" style="background:var(--ink3);border:1px solid var(--steel);border-radius:6px;padding:5px 8px;font-family:var(--mono);font-size:11px;color:var(--mute);cursor:pointer;outline:none">
+          <option value="full">Full quality (slower)</option>
+          <option value="med" selected>Medium</option>
+          <option value="low">Low (faster)</option>
+        </select>
+        <div class="vt-sep"></div>
+        <button class="vt-btn" onclick="fitScreen()">⊡ Fit</button>
+        <button class="vt-btn" onclick="toggleFS()">⛶ Fullscreen</button>
+        <div class="vt-space"></div>
+        <div id="vfps">-- fps</div>
+        <div id="vlatency">-- ms</div>
+        <div class="vt-sep"></div>
+        <button class="vt-btn danger" id="vbtn-dc" onclick="vncDisconnect()" disabled>✕ Disconnect</button>
+      </div>
+
+      <div id="vcanvas-wrap">
+        <div id="vsplash">
+          <div class="splash-icon">🖥</div>
+          <div class="splash-t">No active session</div>
+          <div class="splash-s">Enter a session code and click Connect</div>
+        </div>
+        <div id="vloading">
+          <div class="spinner"></div>
+          <div class="load-msg" id="vload-msg">Connecting…</div>
+        </div>
+        <canvas id="remote-canvas" style="display:none"></canvas>
+        <div id="vclip">
+          <label>REMOTE CLIPBOARD</label>
+          <textarea id="vclip-text" placeholder="Paste text here to send to remote…"></textarea>
+          <div class="vclip-btns">
+            <button onclick="sendClipboard()">Send to remote →</button>
+            <button onclick="document.getElementById('vclip').classList.remove('open')">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<div class="modal-bg" id="dl-modal" onclick="closeDlModal(event)">
+  <div class="modal">
+    <button class="modal-x" onclick="document.getElementById('dl-modal').classList.remove('open')">✕</button>
+    <h3>Download DeltaRDT Agent</h3>
+    <p class="modal-sub">Install on the PC you want to control. No download needed on the viewer side. Just use the Connect page.</p>
+    <a class="mdl-dl" href="deltardt-setup.exe"><div class="mdl-info"><div class="mdl-name">Windows Installer</div><div class="mdl-meta">deltardt-setup.exe · 4.2 MB · Windows 10/11</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="deltardt-portable.zip"><div class="mdl-info"><div class="mdl-name">Windows Portable</div><div class="mdl-meta">deltardt-portable.zip · 3.1 MB · No install needed</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="DeltaRDT.dmg"><span class="mdl-icon"></span><div class="mdl-info"><div class="mdl-name">macOS App</div><div class="mdl-meta">DeltaRDT.dmg · 6.8 MB · Intel and Apple Silicon</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="deltardt.deb"><div class="mdl-info"><div class="mdl-name">Linux .deb</div><div class="mdl-meta">deltardt_1.0.0_amd64.deb · 2.1 MB · Debian/Ubuntu</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="deltardt.py"><div class="mdl-info"><div class="mdl-name">Python Script (all platforms)</div><div class="mdl-meta">deltardt.py · 48 KB · Requires Python 3.9+</div></div><span class="mdl-arr">↓</span></a>
+    <div class="modal-note">After installing, a session code appears on screen. The viewer connects at <span class="code-inline">deltardt.app → Connect Now</span></div>
+  </div>
+</div>
+<div id="toast"></div>
+</body>
 </html>
