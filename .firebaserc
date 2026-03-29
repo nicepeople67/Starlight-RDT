@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "delta-42a39"
+  },
+  "targets": {
+    "delta-42a39": {
+      "hosting": {
+        "main": ["deltardt"]
+      }
+    }
+  }
+}
