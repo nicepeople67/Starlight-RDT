@@ -11,7 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci && npm run build
+
+      - name: Fix git identity so Firebase doesn't use my old acc
+        run: |
+          git config --global user.name "ethanlb34"
+          git config --global user.email "ethanbosman@protonmail.com"
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
