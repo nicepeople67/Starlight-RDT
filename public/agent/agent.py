@@ -1,17 +1,27 @@
 #!/usr/bin/env python3
-import os, sys, socket, struct, threading, time, json, hashlib, secrets, logging, argparse, platform
+"""
+DeltaRDT Agent
+- Runs a local VNC server on 127.0.0.1:5900
+- Connects to the relay and registers the session code
+- When a viewer connects, bridges VNC traffic through the relay WebSocket
+- Shows a system tray icon with the code on Windows/macOS/Linux
+"""
+
+import os, sys, socket, struct, threading, time, json, secrets, logging, argparse, platform, asyncio
 from pathlib import Path
 from typing import Optional, Tuple
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 log = logging.getLogger('DeltaRDT')
 
-RELAY_URL   = os.environ.get('DELTARDT_RELAY', 'wss://relay.deltardt.app')
+RELAY_URL   = os.environ.get('DELTARDT_RELAY', 'ws://localhost:8765')
 VNC_PORT    = int(os.environ.get('DELTARDT_PORT', '5900'))
 CODE_TTL    = 7 * 24 * 3600
 CONFIG_DIR  = Path.home() / '.deltardt'
 CONFIG_FILE = CONFIG_DIR / 'config.json'
+PLATFORM    = platform.system()
 
+# ── Optional imports ──────────────────────────────────────────────────────────
 try:
     import mss
     HAS_MSS = True
@@ -32,14 +42,13 @@ except ImportError:
     HAS_INPUT = False
 
 try:
-    import websockets, asyncio
+    import websockets
     HAS_WS = True
 except ImportError:
     HAS_WS = False
 
-PLATFORM = platform.system()
 
-
+# ── Screen capture ────────────────────────────────────────────────────────────
 def get_screen_size() -> Tuple[int, int]:
     if HAS_MSS:
         with mss.mss() as s:
@@ -58,62 +67,73 @@ def capture_screen(x: int, y: int, w: int, h: int) -> bytes:
             raw = bytes(img.raw)
             out = bytearray(w * h * 4)
             for i in range(w * h):
-                out[i*4]   = raw[i*4+2]
-                out[i*4+1] = raw[i*4+1]
-                out[i*4+2] = raw[i*4]
+                out[i*4]   = raw[i*4+2]  # R
+                out[i*4+1] = raw[i*4+1]  # G
+                out[i*4+2] = raw[i*4]    # B
                 out[i*4+3] = 255
             return bytes(out)
     if HAS_PIL:
         img = ImageGrab.grab(bbox=(x, y, x+w, y+h)).convert('RGBA')
         return img.tobytes()
-    return bytes([128, 128, 128, 255] * (w * h))
+    return bytes([40, 40, 40, 255] * (w * h))
 
 
+# ── Config / session code ─────────────────────────────────────────────────────
 class Config:
     def __init__(self):
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        self.data = {}
+        self._data: dict = {}
         self._load()
 
     def _load(self):
         if CONFIG_FILE.exists():
             try:
-                self.data = json.loads(CONFIG_FILE.read_text())
+                self._data = json.loads(CONFIG_FILE.read_text())
             except Exception:
-                self.data = {}
+                self._data = {}
 
-    def save(self):
-        CONFIG_FILE.write_text(json.dumps(self.data, indent=2))
+    def _save(self):
+        CONFIG_FILE.write_text(json.dumps(self._data, indent=2))
 
     def get_code(self) -> str:
         now = time.time()
-        if 'code' not in self.data or now - self.data.get('code_issued', 0) > CODE_TTL:
-            self.data['code'] = ''.join(secrets.choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(8))
-            self.data['code_issued'] = now
-            self.save()
-        return self.data['code']
+        if 'code' not in self._data or now - self._data.get('code_issued', 0) > CODE_TTL:
+            chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+            self._data['code'] = ''.join(secrets.choice(chars) for _ in range(8))
+            self._data['code_issued'] = now
+            self._save()
+        return self._data['code']
 
     def code_expires_in(self) -> int:
-        issued = self.data.get('code_issued', 0)
+        issued = self._data.get('code_issued', 0)
         return max(0, int(CODE_TTL - (time.time() - issued)))
 
+    def expiry_str(self) -> str:
+        secs  = self.code_expires_in()
+        days  = secs // 86400
+        hours = (secs % 86400) // 3600
+        return f'Refreshes in {days}d {hours}h'
 
-RFB_VER    = b'RFB 003.008\n'
-SEC_NONE   = 1
-PIXEL_FMT  = struct.pack('>BBBBHHHBBB3x', 32, 24, 0, 1, 255, 255, 255, 16, 8, 0)
-KEYSYM_MAP = {
-    0xff08:'backspace', 0xff09:'tab',    0xff0d:'enter',  0xff1b:'escape',
-    0xffff:'delete',    0xff50:'home',   0xff57:'end',     0xff55:'pageup',
-    0xff56:'pagedown',  0xff51:'left',   0xff52:'up',      0xff53:'right',
-    0xff54:'down',      0xff63:'insert', 0xffe1:'shift',   0xffe2:'shift',
-    0xffe3:'ctrl',      0xffe4:'ctrl',   0xffe9:'alt',     0xffea:'alt',
-    0xffeb:'winleft',   0xffec:'winright',
+
+# ── RFB Protocol constants ────────────────────────────────────────────────────
+RFB_VER   = b'RFB 003.008\n'
+SEC_NONE  = 1
+PIX_FMT   = struct.pack('>BBBBHHHBBB3x', 32, 24, 0, 1, 255, 255, 255, 16, 8, 0)
+
+KEYSYM = {
+    0xff08:'backspace', 0xff09:'tab',    0xff0d:'enter',   0xff1b:'escape',
+    0xffff:'delete',    0xff50:'home',   0xff57:'end',      0xff55:'pageup',
+    0xff56:'pagedown',  0xff51:'left',   0xff52:'up',       0xff53:'right',
+    0xff54:'down',      0xff63:'insert',
+    0xffe1:'shift',     0xffe2:'shift',  0xffe3:'ctrl',     0xffe4:'ctrl',
+    0xffe9:'alt',       0xffea:'alt',    0xffeb:'winleft',  0xffec:'winright',
     **{0xffbe+i: f'f{i+1}' for i in range(12)},
 }
 
 
+# ── RFB client handler (one per viewer connection) ────────────────────────────
 class RFBClient(threading.Thread):
-    def __init__(self, conn, addr, server):
+    def __init__(self, conn: socket.socket, addr, server: 'VNCServer'):
         super().__init__(daemon=True)
         self.conn    = conn
         self.addr    = addr
@@ -144,38 +164,12 @@ class RFBClient(threading.Thread):
         try:
             if not self._handshake():
                 return
-            while self.running:
-                hdr = self._recv(1)
-                if not hdr:
-                    break
-                t = hdr[0]
-                if t == 0:
-                    self._recv(19)
-                elif t == 2:
-                    d = self._recv(3)
-                    count = struct.unpack('!xH', d)[0]
-                    self._recv(count * 4)
-                elif t == 3:
-                    d = self._recv(9)
-                    inc, x, y, w, h = struct.unpack('!BHHHH', d)
-                    self._send_update(x, y, w, h)
-                elif t == 4:
-                    d = self._recv(7)
-                    down, _, sym = struct.unpack('!BxxI', d)
-                    self._handle_key(down, sym)
-                elif t == 5:
-                    d = self._recv(5)
-                    mask, x, y = struct.unpack('!BHH', d)
-                    self._handle_ptr(mask, x, y)
-                elif t == 6:
-                    d = self._recv(7)
-                    length = struct.unpack('!3xI', d)[0]
-                    self._recv(length)
+            self._message_loop()
         except Exception as e:
-            log.debug(f'Client error: {e}')
+            log.debug(f'RFBClient error: {e}')
         finally:
             self.conn.close()
-            log.info(f'Client disconnected: {self.addr}')
+            log.info(f'Viewer disconnected: {self.addr}')
 
     def _handshake(self) -> bool:
         self._send(RFB_VER)
@@ -186,24 +180,54 @@ class RFBClient(threading.Thread):
         self._recv(1)
         w, h = self.server.width, self.server.height
         name = b'DeltaRDT'
-        self._send(struct.pack('!HH', w, h) + PIXEL_FMT + struct.pack('!I', len(name)) + name)
+        self._send(struct.pack('!HH', w, h) + PIX_FMT + struct.pack('!I', len(name)) + name)
+        log.info(f'RFB handshake done with {self.addr}  ({w}x{h})')
         return True
 
-    def _send_update(self, x, y, w, h):
+    def _message_loop(self):
+        while self.running:
+            hdr = self._recv(1)
+            if not hdr:
+                break
+            t = hdr[0]
+            if t == 0:    # SetPixelFormat
+                self._recv(19)
+            elif t == 2:  # SetEncodings
+                d = self._recv(3)
+                count = struct.unpack('!xH', d)[0]
+                self._recv(count * 4)
+            elif t == 3:  # FramebufferUpdateRequest
+                d = self._recv(9)
+                _, x, y, w, h = struct.unpack('!BHHHH', d)
+                self._send_update(x, y, w, h)
+            elif t == 4:  # KeyEvent
+                d = self._recv(7)
+                down, _, sym = struct.unpack('!BxxI', d)
+                self._handle_key(down, sym)
+            elif t == 5:  # PointerEvent
+                d = self._recv(5)
+                mask, x, y = struct.unpack('!BHH', d)
+                self._handle_ptr(mask, x, y)
+            elif t == 6:  # ClientCutText
+                d = self._recv(7)
+                length = struct.unpack('!3xI', d)[0]
+                self._recv(length)
+
+    def _send_update(self, x: int, y: int, w: int, h: int):
         sw, sh = self.server.width, self.server.height
         x = max(0, min(x, sw - 1))
         y = max(0, min(y, sh - 1))
         w = max(1, min(w, sw - x))
         h = max(1, min(h, sh - y))
         data = capture_screen(x, y, w, h)
-        hdr  = struct.pack('!BBH', 0, 0, 1)
-        rhdr = struct.pack('!HHHHi', x, y, w, h, 0)
-        self._send(hdr + rhdr + data)
+        self._send(struct.pack('!BBH', 0, 0, 1))
+        self._send(struct.pack('!HHHHi', x, y, w, h, 0))
+        self._send(data)
 
     def _handle_key(self, down: int, sym: int):
         if not HAS_INPUT:
             return
-        key = KEYSYM_MAP.get(sym)
+        key = KEYSYM.get(sym)
         if key is None and 0x20 <= sym <= 0x7e:
             key = chr(sym)
         if not key:
@@ -237,24 +261,25 @@ class RFBClient(threading.Thread):
             pass
 
 
+# ── Local VNC server ──────────────────────────────────────────────────────────
 class VNCServer(threading.Thread):
     def __init__(self, port: int = VNC_PORT):
         super().__init__(daemon=True)
-        self.port   = port
-        self.width, self.height = get_screen_size()
-        self._sock  = None
+        self.port    = port
         self.running = True
+        self._sock: Optional[socket.socket] = None
+        self.width, self.height = get_screen_size()
 
     def run(self):
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._sock.bind(('127.0.0.1', self.port))
         self._sock.listen(5)
-        log.info(f'VNC server on 127.0.0.1:{self.port} ({self.width}x{self.height})')
+        log.info(f'VNC server: 127.0.0.1:{self.port}  ({self.width}x{self.height})')
         while self.running:
             try:
                 conn, addr = self._sock.accept()
-                log.info(f'VNC client: {addr}')
+                log.info(f'VNC connection from {addr}')
                 RFBClient(conn, addr, self).start()
             except OSError:
                 break
@@ -262,16 +287,29 @@ class VNCServer(threading.Thread):
     def stop(self):
         self.running = False
         if self._sock:
-            self._sock.close()
+            try:
+                self._sock.close()
+            except Exception:
+                pass
 
 
+# ── Relay connector ───────────────────────────────────────────────────────────
 class RelayConnector:
-    def __init__(self, relay_url: str, session_code: str, vnc_port: int):
-        self.relay_url    = relay_url
-        self.session_code = session_code
-        self.vnc_port     = vnc_port
-        self._running     = False
-        self._thread      = None
+    """
+    Connects to relay at /register/<code>.
+    When relay sends {"status": "viewer_connected"}, opens a raw TCP socket
+    to the local VNC server and bridges all subsequent bytes bidirectionally
+    over the relay WebSocket.
+    """
+
+    def __init__(self, relay_url: str, code: str, vnc_port: int,
+                 on_status=None):
+        self.relay_url = relay_url.rstrip('/')
+        self.code      = code
+        self.vnc_port  = vnc_port
+        self.on_status = on_status or (lambda s: None)
+        self._running  = False
+        self._thread: Optional[threading.Thread] = None
 
     def start(self):
         self._running = True
@@ -283,195 +321,292 @@ class RelayConnector:
 
     def _loop(self):
         if not HAS_WS:
-            log.warning('websockets not installed — relay disabled')
+            log.error('websockets package not installed — relay disabled.')
+            log.error('Run:  pip install websockets')
             return
-        import asyncio
+
         while self._running:
             try:
                 asyncio.run(self._connect())
             except Exception as e:
-                log.warning(f'Relay disconnected: {e}')
+                log.warning(f'Relay error: {e}')
+                self.on_status('disconnected')
             if self._running:
                 log.info('Reconnecting to relay in 5s…')
                 time.sleep(5)
 
     async def _connect(self):
-        import websockets as ws
-        reg_url = self.relay_url.rstrip('/') + f'/register/{self.session_code}'
-        log.info(f'Connecting to relay: {reg_url}')
-        async with ws.connect(reg_url, ping_interval=20, ping_timeout=10) as relay_ws:
-            log.info('Relay connected — waiting for viewer')
-            async for message in relay_ws:
-                if message == 'VIEWER_CONNECTED':
-                    log.info('Viewer connected — bridging to VNC')
-                    await self._bridge(relay_ws)
+        url = f'{self.relay_url}/register/{self.code}'
+        log.info(f'Connecting to relay: {url}')
+        self.on_status('connecting')
 
-    async def _bridge(self, relay_ws):
-        import asyncio
-        reader, writer = await asyncio.open_connection('127.0.0.1', self.vnc_port)
+        async with websockets.connect(
+            url,
+            ping_interval=20,
+            ping_timeout=30,
+            max_size=16 * 1024 * 1024,
+        ) as ws:
+            self.on_status('connected')
+            log.info(f'Relay connected — session code: {self.code}')
 
-        async def relay_to_vnc():
-            async for data in relay_ws:
-                if isinstance(data, bytes):
-                    writer.write(data)
-                    await writer.drain()
+            async for raw_msg in ws:
+                if isinstance(raw_msg, str):
+                    try:
+                        msg = json.loads(raw_msg)
+                    except json.JSONDecodeError:
+                        continue
+
+                    if msg.get('status') == 'registered':
+                        log.info(f'Registration confirmed — code: {self.code}')
+
+                    elif msg.get('status') == 'viewer_connected':
+                        log.info('Viewer connected — bridging to VNC')
+                        self.on_status('viewer_connected')
+                        await self._bridge_vnc(ws)
+                        self.on_status('connected')
+                        log.info('Viewer disconnected — waiting for next viewer')
+
+                    elif 'error' in msg:
+                        log.error(f'Relay error: {msg["error"]}')
+
+                elif isinstance(raw_msg, bytes):
+                    # Raw binary during bridging (shouldn't happen here but handle it)
+                    pass
+
+    async def _bridge_vnc(self, relay_ws):
+        """Open a TCP connection to local VNC and bridge bytes both ways."""
+        try:
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection('127.0.0.1', self.vnc_port),
+                timeout=5.0,
+            )
+        except Exception as e:
+            log.error(f'Cannot connect to local VNC on port {self.vnc_port}: {e}')
+            try:
+                await relay_ws.send(json.dumps({'error': 'VNC server not reachable'}))
+            except Exception:
+                pass
+            return
+
+        log.info(f'VNC bridge open on port {self.vnc_port}')
 
         async def vnc_to_relay():
-            while True:
-                data = await reader.read(65536)
-                if not data:
-                    break
-                await relay_ws.send(data)
+            try:
+                while True:
+                    data = await reader.read(65536)
+                    if not data:
+                        break
+                    await relay_ws.send(data)
+            except Exception:
+                pass
 
-        done, pending = await asyncio.wait(
-            [asyncio.create_task(relay_to_vnc()), asyncio.create_task(vnc_to_relay())],
-            return_when=asyncio.FIRST_COMPLETED
-        )
+        async def relay_to_vnc():
+            try:
+                async for msg in relay_ws:
+                    if isinstance(msg, bytes):
+                        writer.write(msg)
+                        await writer.drain()
+                    elif isinstance(msg, str):
+                        try:
+                            ctrl = json.loads(msg)
+                            if ctrl.get('status') == 'viewer_disconnected':
+                                break
+                        except json.JSONDecodeError:
+                            pass
+            except Exception:
+                pass
+
+        tasks = [
+            asyncio.create_task(vnc_to_relay()),
+            asyncio.create_task(relay_to_vnc()),
+        ]
+        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
         for t in pending:
             t.cancel()
         writer.close()
+        try:
+            await writer.wait_closed()
+        except Exception:
+            pass
+        log.info('VNC bridge closed')
 
 
+# ── System tray ───────────────────────────────────────────────────────────────
 class TrayApp:
     def __init__(self, config: Config, vnc: VNCServer, relay: RelayConnector):
         self.config = config
         self.vnc    = vnc
         self.relay  = relay
+        self._status = 'connecting'
+
+    def set_status(self, status: str):
+        self._status = status
+
+    def _status_label(self) -> str:
+        return {
+            'connecting':       'Connecting to relay…',
+            'connected':        'Waiting for viewer',
+            'viewer_connected': '● Viewer connected',
+            'disconnected':     'Relay disconnected',
+        }.get(self._status, self._status)
 
     def run(self):
         if PLATFORM == 'Windows':
-            self._run_windows()
+            self._windows()
         elif PLATFORM == 'Darwin':
-            self._run_macos()
+            self._macos()
         else:
-            self._run_linux()
+            self._linux()
 
-    def _make_menu_items(self):
-        code    = self.config.get_code()
-        expires = self.config.code_expires_in()
-        days    = expires // 86400
-        hours   = (expires % 86400) // 3600
-        return code, f'Refreshes in {days}d {hours}h'
+    def _quit(self):
+        self.vnc.stop()
+        self.relay.stop()
+        os._exit(0)
 
-    def _run_windows(self):
+    def _copy_code(self):
+        code = self.config.get_code()
+        try:
+            import pyperclip
+            pyperclip.copy(code)
+            log.info(f'Code copied: {code}')
+        except ImportError:
+            if PLATFORM == 'Darwin':
+                import subprocess
+                subprocess.run(['pbcopy'], input=code.encode())
+            elif PLATFORM == 'Windows':
+                import subprocess
+                subprocess.run(['clip'], input=code.encode())
+            else:
+                log.info(f'Session code: {code}')
+
+    def _windows(self):
         try:
             import pystray
-            from PIL import Image, ImageDraw
+            from PIL import Image, ImageDraw, ImageFont
         except ImportError:
-            self._run_cli()
+            log.warning('pystray/Pillow not installed — falling back to CLI')
+            self._cli()
             return
 
-        img  = Image.new('RGB', (64, 64), color=(0, 229, 255))
+        img  = Image.new('RGB', (64, 64), (0, 229, 255))
         draw = ImageDraw.Draw(img)
         draw.rectangle([16, 16, 48, 48], fill=(13, 15, 20))
+        draw.text((20, 24), 'D', fill=(0, 229, 255))
 
-        code, expiry = self._make_menu_items()
+        code   = self.config.get_code()
+        expiry = self.config.expiry_str()
 
-        def on_quit(icon, _):
-            icon.stop()
-            self.vnc.stop()
-            self.relay.stop()
-            os._exit(0)
+        def make_menu():
+            return pystray.Menu(
+                pystray.MenuItem(f'Code: {code}', lambda i, _: self._copy_code(), default=True),
+                pystray.MenuItem(expiry, None, enabled=False),
+                pystray.MenuItem(self._status_label(), None, enabled=False),
+                pystray.Menu.SEPARATOR,
+                pystray.MenuItem('Copy code to clipboard', lambda i, _: self._copy_code()),
+                pystray.MenuItem('Quit DeltaRDT', lambda i, _: self._quit()),
+            )
 
-        def copy_code(icon, _):
-            try:
-                import pyperclip
-                pyperclip.copy(self.config.get_code())
-            except Exception:
-                pass
-
-        menu = pystray.Menu(
-            pystray.MenuItem(f'Code: {code}', copy_code, default=True),
-            pystray.MenuItem(expiry, None, enabled=False),
-            pystray.Menu.SEPARATOR,
-            pystray.MenuItem('Copy code', copy_code),
-            pystray.MenuItem('Quit DeltaRDT', on_quit),
-        )
-        icon = pystray.Icon('DeltaRDT', img, 'DeltaRDT', menu)
+        icon = pystray.Icon('DeltaRDT', img, f'DeltaRDT  |  {code}', make_menu())
         log.info(f'Session code: {code}  ({expiry})')
+        print(f'\n  ╔══════════════════════════════╗')
+        print(f'  ║  DeltaRDT is running         ║')
+        print(f'  ║  Session code: {code:<14} ║')
+        print(f'  ║  {expiry:<28} ║')
+        print(f'  ╚══════════════════════════════╝\n')
         icon.run()
 
-    def _run_macos(self):
+    def _macos(self):
         try:
             import rumps
         except ImportError:
-            self._run_cli()
+            log.warning('rumps not installed — falling back to CLI')
+            self._cli()
             return
 
-        code, expiry = self._make_menu_items()
+        code   = self.config.get_code()
+        expiry = self.config.expiry_str()
+        cfg    = self.config
 
-        class DeltaApp(rumps.App):
-            def __init__(inner, config, relay):
-                inner.config = config
-                inner.relay  = relay
-                super().__init__('DeltaRDT', title='⬡')
+        class App(rumps.App):
+            def __init__(inner):
+                super().__init__('DeltaRDT', title='⬡ DeltaRDT')
+                inner.menu = [
+                    rumps.MenuItem(f'Code: {code}'),
+                    rumps.MenuItem(expiry),
+                    None,
+                    rumps.MenuItem('Copy code'),
+                    rumps.MenuItem('Quit'),
+                ]
 
-            @rumps.clicked(f'Code: {code}')
-            def show_code(inner, _):
-                c = inner.config.get_code()
-                rumps.alert('Your session code', c, ok='Copy')
-                try:
-                    import subprocess
-                    subprocess.run(['pbcopy'], input=c.encode())
-                except Exception:
-                    pass
+            @rumps.clicked('Copy code')
+            def do_copy(inner, _):
+                import subprocess
+                subprocess.run(['pbcopy'], input=cfg.get_code().encode())
+                rumps.notification('DeltaRDT', 'Code copied', cfg.get_code())
 
             @rumps.clicked('Quit')
-            def quit_app(inner, _):
+            def do_quit(inner, _):
                 rumps.quit_application()
 
-        app = DeltaApp(self.config, self.relay)
-        app.menu = [f'Code: {code}', expiry, None, 'Quit']
         log.info(f'Session code: {code}  ({expiry})')
-        app.run()
+        print(f'\n  DeltaRDT running in menu bar — code: {code}\n')
+        App().run()
 
-    def _run_linux(self):
+    def _linux(self):
         try:
             import gi
             gi.require_version('Gtk', '3.0')
             gi.require_version('AppIndicator3', '0.1')
             from gi.repository import Gtk, AppIndicator3
         except Exception:
-            self._run_cli()
+            log.warning('GTK/AppIndicator3 not available — falling back to CLI')
+            self._cli()
             return
 
-        code, expiry = self._make_menu_items()
-        indicator = AppIndicator3.Indicator.new(
+        code   = self.config.get_code()
+        expiry = self.config.expiry_str()
+
+        ind = AppIndicator3.Indicator.new(
             'deltardt', 'network-transmit',
-            AppIndicator3.IndicatorCategory.APPLICATION_STATUS
+            AppIndicator3.IndicatorCategory.APPLICATION_STATUS,
         )
-        indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
+        ind.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
 
         menu = Gtk.Menu()
-
-        code_item = Gtk.MenuItem(label=f'Code: {code}')
-        code_item.set_sensitive(False)
-        menu.append(code_item)
-
-        exp_item = Gtk.MenuItem(label=expiry)
-        exp_item.set_sensitive(False)
-        menu.append(exp_item)
+        for label, sensitive in [(f'Code: {code}', False), (expiry, False)]:
+            item = Gtk.MenuItem(label=label)
+            item.set_sensitive(sensitive)
+            menu.append(item)
 
         menu.append(Gtk.SeparatorMenuItem())
 
+        copy_item = Gtk.MenuItem(label='Copy code')
+        copy_item.connect('activate', lambda _: self._copy_code())
+        menu.append(copy_item)
+
         quit_item = Gtk.MenuItem(label='Quit DeltaRDT')
-        quit_item.connect('activate', lambda _: (self.vnc.stop(), Gtk.main_quit()))
+        quit_item.connect('activate', lambda _: self._quit())
         menu.append(quit_item)
 
         menu.show_all()
-        indicator.set_menu(menu)
+        ind.set_menu(menu)
+
         log.info(f'Session code: {code}  ({expiry})')
+        print(f'\n  DeltaRDT running in tray — code: {code}\n')
         Gtk.main()
 
-    def _run_cli(self):
-        code, expiry = self._make_menu_items()
-        print('=' * 50)
-        print(f'  DeltaRDT Agent running')
-        print(f'  Session code : {code}')
-        print(f'  {expiry}')
-        print(f'  VNC port     : {self.vnc.port}')
-        print('  Press Ctrl+C to stop')
-        print('=' * 50)
+    def _cli(self):
+        code   = self.config.get_code()
+        expiry = self.config.expiry_str()
+        print()
+        print('  ╔══════════════════════════════════╗')
+        print('  ║       DeltaRDT Agent Running     ║')
+        print(f'  ║   Session code : {code:<16} ║')
+        print(f'  ║   {expiry:<32} ║')
+        print(f'  ║   VNC port     : {self.vnc.port:<16} ║')
+        print('  ║   Press Ctrl+C to stop           ║')
+        print('  ╚══════════════════════════════════╝')
+        print()
         try:
             while True:
                 time.sleep(1)
@@ -479,30 +614,38 @@ class TrayApp:
             pass
 
 
+# ── Entry point ───────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(description='DeltaRDT Agent')
-    parser.add_argument('--relay', default=RELAY_URL)
-    parser.add_argument('--port',  default=VNC_PORT, type=int)
-    parser.add_argument('--no-tray', action='store_true')
+    parser.add_argument('--relay',    default=RELAY_URL,  help='Relay WebSocket URL')
+    parser.add_argument('--port',     default=VNC_PORT,   type=int, help='Local VNC port')
+    parser.add_argument('--no-tray',  action='store_true', help='CLI mode, no tray icon')
     args = parser.parse_args()
 
     if not HAS_MSS and not HAS_PIL:
-        log.warning('No screen capture library — install mss or Pillow')
+        log.warning('No screen capture library found.')
+        log.warning('Install with:  pip install mss')
     if not HAS_INPUT:
-        log.warning('pyautogui not found — keyboard/mouse input disabled')
+        log.warning('pyautogui not found — keyboard/mouse input will be disabled.')
+        log.warning('Install with:  pip install pyautogui')
+    if not HAS_WS:
+        log.error('websockets not installed — cannot connect to relay!')
+        log.error('Install with:  pip install websockets')
 
     cfg   = Config()
     code  = cfg.get_code()
     vnc   = VNCServer(port=args.port)
-    relay = RelayConnector(args.relay, code, args.port)
+    tray  = TrayApp(cfg, vnc, None)
+    relay = RelayConnector(args.relay, code, args.port, on_status=tray.set_status)
+    tray.relay = relay
 
     vnc.start()
     relay.start()
 
     if args.no_tray:
-        TrayApp(cfg, vnc, relay)._run_cli()
+        tray._cli()
     else:
-        TrayApp(cfg, vnc, relay).run()
+        tray.run()
 
     vnc.stop()
     relay.stop()

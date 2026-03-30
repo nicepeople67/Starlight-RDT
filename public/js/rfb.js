@@ -54,23 +54,47 @@ function vncConnect() {
   ibuf     = new Uint8Array(0);
   rfbState = 'version';
 
-  const url = relay.replace(/\/$/, '') + '/vnc/' + code;
+  const url = relay.replace(/\/$/, '') + '/connect/' + code;
   document.querySelector('#vbar .vbar-info').textContent = url;
 
   setVStatus('ing', 'Connecting…');
-  setVLoading(true, 'Opening WebSocket to relay…');
+  setVLoading(true, 'Contacting relay…');
   setSplash(true);
 
   document.getElementById('vbtn-connect').disabled = true;
   document.getElementById('vbtn-dc').disabled = false;
 
-  ws = new WebSocket(url, ['binary']);
+  ws = new WebSocket(url);
   ws.binaryType = 'arraybuffer';
 
-  ws.onopen    = () => setVLoading(true, 'RFB handshake…');
-  ws.onmessage = e  => { bufAppend(e.data); try { pump(); } catch(err) { toast('Protocol error: ' + err.message, 'err'); } };
-  ws.onerror   = ()  => { setVStatus('err', 'Error'); setVLoading(false); toast('WebSocket error — check relay URL and code', 'err'); resetVUI(); };
-  ws.onclose   = ()  => {
+  ws.onopen = () => setVLoading(true, 'Waiting for agent…');
+
+  ws.onmessage = e => {
+    if (typeof e.data === 'string') {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.error) {
+          setVStatus('err', 'Error');
+          setVLoading(false);
+          toast('Relay: ' + msg.error, 'err');
+          resetVUI();
+          ws.close();
+        }
+      } catch (_) {}
+      return;
+    }
+    bufAppend(e.data);
+    try { pump(); } catch(err) { toast('Protocol error: ' + err.message, 'err'); }
+  };
+
+  ws.onerror = () => {
+    setVStatus('err', 'Error');
+    setVLoading(false);
+    toast('Cannot reach relay — check the relay URL', 'err');
+    resetVUI();
+  };
+
+  ws.onclose = () => {
     if (rfbState !== 'idle') { setVStatus('err', 'Disconnected'); toast('Connection closed'); }
     rfbState = 'idle';
     setVLoading(false);
