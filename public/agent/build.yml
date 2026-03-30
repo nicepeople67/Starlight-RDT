@@ -1,0 +1,101 @@
+name: Build installers
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r agent/requirements.txt pyinstaller
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build
+        run: python agent/build.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installers
+          path: |
+            agent/dist/deltardt-setup.exe
+            agent/dist/deltardt-portable.zip
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip3 install -r agent/requirements.txt pyinstaller
+          brew install create-dmg
+
+      - name: Build
+        run: python3 agent/build.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: agent/dist/DeltaRDT.dmg
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y dpkg-dev libgirepository1.0-dev gir1.2-gtk-3.0 \
+            libappindicator3-dev gir1.2-appindicator3-0.1 scrot
+
+      - name: Install Python deps
+        run: pip install -r agent/requirements.txt pyinstaller
+
+      - name: Build
+        run: python3 agent/build.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-installer
+          path: agent/dist/deltardt.deb
+
+  release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/windows-installers/deltardt-setup.exe
+            artifacts/windows-installers/deltardt-portable.zip
+            artifacts/macos-installer/DeltaRDT.dmg
+            artifacts/linux-installer/deltardt.deb
+          generate_release_notes: true

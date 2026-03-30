@@ -12,14 +12,25 @@ function triggerDownload(filename, label) {
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
       } else {
-        toast(label + ' — coming soon! Check back shortly.', 'warn');
+        _dlFallback(label);
       }
     })
-    .catch(() => {
-      toast(label + ' — coming soon! Check back shortly.', 'warn');
-    });
+    .catch(() => _dlFallback(label));
+}
+
+function _dlFallback(label) {
+  const modal = document.getElementById('dl-coming-soon');
+  if (modal) {
+    document.getElementById('dl-cs-label').textContent = label;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  } else {
+    toast(label + ' — build not available yet. See agent/build.py to compile.', 'warn');
+  }
 }
 
 function scrollToSection(id) {
