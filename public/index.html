@@ -398,25 +398,6 @@
 
 </div><!-- /p-home -->
 
-<!-- BUILD YOURSELF MODAL -->
-<div class="modal-bg" id="dl-coming-soon" onclick="if(event.target===this){this.classList.remove('open');document.body.style.overflow=''}">
-  <div class="modal">
-    <button class="modal-x" onclick="document.getElementById('dl-coming-soon').classList.remove('open');document.body.style.overflow=''">✕</button>
-    <h3>Build the agent</h3>
-    <p class="modal-sub"><span id="dl-cs-label"></span> hasn't been compiled yet. Build it yourself in under 2 minutes — or wait for a release.</p>
-    <div style="background:var(--ink);border:1px solid var(--steel);border-left:3px solid var(--cyan);border-radius:6px;padding:14px 16px;font-family:var(--mono);font-size:12px;color:var(--fog);margin-bottom:14px">
-      <div style="color:var(--dim);margin-bottom:6px">on the PC you want to share:</div>
-      pip install -r agent/requirements.txt<br>
-      python agent/build.py
-    </div>
-    <p style="font-size:13px;color:var(--mute);line-height:1.7">Produces the installer for your OS automatically. See <code style="font-family:var(--mono);background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px">downloads/README.md</code> for full instructions.</p>
-    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-      <a href="agent/build.py" download class="btn-p" style="font-size:13px;padding:10px 18px">↓ Download build.py</a>
-      <a href="agent/requirements.txt" download class="btn-s" style="font-size:13px;padding:10px 18px">↓ requirements.txt</a>
-    </div>
-  </div>
-</div>
-
 <!-- DOWNLOAD MODAL -->
 <div class="modal-bg" id="dl-modal" onclick="closeDlModal(event)">
   <div class="modal">
