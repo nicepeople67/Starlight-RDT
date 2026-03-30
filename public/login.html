@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect — DeltaRDT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;700;900&family=Barlow+Condensed:wght@700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/auth.css">
+  <script src="js/auth.js"></script>
+</head>
+<body>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+
+    <a href="index.html" class="auth-logo">
+      <div class="auth-logo-mark">D</div>
+      Delta<span>RDT</span>
+    </a>
+
+    <div class="auth-title">Connect to<br>a remote PC</div>
+    <p class="auth-sub">Enter the session code shown by the DeltaRDT agent on the host PC.</p>
+
+    <div class="auth-field">
+      <label for="code-input">Session code</label>
+      <input
+        id="code-input"
+        type="text"
+        placeholder="AB3X92"
+        maxlength="12"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+        autofocus
+      >
+    </div>
+
+    <div class="auth-field">
+      <label for="label-input">Label (optional)</label>
+      <input
+        id="label-input"
+        type="text"
+        placeholder="My home PC"
+        maxlength="40"
+        style="font-size:14px;letter-spacing:0;text-align:left;text-transform:none"
+      >
+    </div>
+
+    <button class="auth-btn" id="auth-submit" onclick="submitLogin()">
+      Connect →
+    </button>
+
+    <div class="auth-err" id="auth-err"></div>
+
+    <div class="auth-your-code" id="your-code-panel" style="display:none">
+      <div class="ayc-label">Your device's session code</div>
+      <div class="ayc-code" id="your-code-value"></div>
+      <div class="ayc-expiry" id="your-code-expiry"></div>
+    </div>
+
+    <div id="saved-sessions" class="auth-sessions"></div>
+
+    <div class="auth-hint">
+      Need the agent? <a href="index.html#download">Download it here</a> · <a href="index.html#setup">Setup guide</a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const account = getAccount();
+    if (account) {
+      const panel = document.getElementById('your-code-panel');
+      const codeEl = document.getElementById('your-code-value');
+      const expiryEl = document.getElementById('your-code-expiry');
+      panel.style.display = 'block';
+      codeEl.textContent = getActiveCode();
+      expiryEl.textContent = 'Refreshes in ' + formatExpiry(codeExpiresIn());
+    }
+  });
+</script>
+</body>
+</html>

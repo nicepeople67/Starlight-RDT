@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remote Desktop — DeltaRDT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;700;900&family=Barlow+Condensed:wght@700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/viewer.css">
+  <script src="js/auth.js"></script>
+</head>
+<body style="visibility:hidden">
+
+<div id="viewer-shell">
+
+  <div id="vbar">
+    <div class="vbar-logo"><span>Delta</span>RDT</div>
+    <div class="vbar-sep"></div>
+    <div class="vbar-info" id="vbar-info">RFB 3.8 · WebSocket relay</div>
+    <a href="index.html" class="vt-btn" style="margin-left:12px;text-decoration:none">← Back to site</a>
+    <button class="vt-btn" onclick="doLogout()" style="margin-left:6px">⏏ Logout</button>
+    <div id="vpill">
+      <div id="vdot"></div>
+      <span id="vstatus-text">Disconnected</span>
+    </div>
+  </div>
+
+  <div id="vsidebar">
+    <div class="vs-sec">Connect</div>
+    <div id="vconn-panel">
+      <div class="vf">
+        <label>Relay URL</label>
+        <input type="text" id="vi-relay" value="wss://relay.deltardt.app" placeholder="wss://relay.deltardt.app">
+      </div>
+      <div class="vf">
+        <label>Session code</label>
+        <input type="text" id="vi-code" placeholder="AB3X92" maxlength="12" style="font-size:16px;letter-spacing:3px;text-transform:uppercase">
+      </div>
+      <div class="vf">
+        <label>Password (if set)</label>
+        <input type="password" id="vi-pass" placeholder="optional">
+      </div>
+      <button id="vbtn-connect" onclick="vncConnect()">Connect</button>
+    </div>
+
+    <div class="vs-sec">Saved sessions</div>
+    <div class="recent-list" id="recent-list"></div>
+
+    <div class="vs-toolbar">
+      <button class="vs-tool" onclick="sendCAD()">Ctrl+Alt+Del</button>
+      <button class="vs-tool" onclick="toggleClip()">Clipboard</button>
+    </div>
+  </div>
+
+  <div id="vmain">
+    <div id="vtoolbar">
+      <span id="vsess-label" style="font-size:13px;font-weight:700;color:var(--white)">No session</span>
+      <span id="vsess-detail" style="font-family:var(--mono);font-size:11px;color:var(--mute)"></span>
+      <div class="vt-sep"></div>
+      <button class="vt-btn" onclick="sendSpecialKey(0xff13)">⏸ Pause</button>
+      <button class="vt-btn" onclick="sendSpecialKey(0xff61)">❖ Super</button>
+      <select id="vquality" onchange="setQuality(this.value)">
+        <option value="full">Full quality</option>
+        <option value="med" selected>Medium</option>
+        <option value="low">Low (faster)</option>
+      </select>
+      <div class="vt-sep"></div>
+      <button class="vt-btn" onclick="fitScreen()">⊡ Fit</button>
+      <button class="vt-btn" onclick="toggleFS()">⛶ Fullscreen</button>
+      <div style="flex:1"></div>
+      <div id="vfps">-- fps</div>
+      <div id="vlatency">-- ms</div>
+      <div class="vt-sep"></div>
+      <button class="vt-btn danger" id="vbtn-dc" onclick="vncDisconnect()" disabled>✕ Disconnect</button>
+    </div>
+
+    <div id="vcanvas-wrap">
+      <div id="vsplash">
+        <div class="splash-icon">🖥</div>
+        <div class="splash-t">No active session</div>
+        <div class="splash-s">Enter a session code and click Connect</div>
+      </div>
+      <div id="vloading">
+        <div class="spinner"></div>
+        <div class="load-msg" id="vload-msg">Connecting…</div>
+      </div>
+      <canvas id="remote-canvas" style="display:none"></canvas>
+      <div id="vclip">
+        <label>Remote clipboard</label>
+        <textarea id="vclip-text" placeholder="Paste text here to send to remote…"></textarea>
+        <div class="vclip-btns">
+          <button onclick="sendClipboard()">Send to remote →</button>
+          <button onclick="document.getElementById('vclip').classList.remove('open')">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="js/rfb.js"></script>
+<script>
+  (function() {
+    const code = getAuthed();
+    if (!code) {
+      window.location.replace('login.html');
+      return;
+    }
+    document.body.style.visibility = 'visible';
+
+    function renderConnectRecent() {
+      const list = document.getElementById('recent-list');
+      if (!list) return;
+      const sessions = getSavedSessions();
+      if (!sessions.length) {
+        list.innerHTML = '<div style="padding:16px;font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center">No saved sessions</div>';
+        return;
+      }
+      list.innerHTML = sessions.map(s => `
+        <div class="rec-item" onclick="loadSession('${s.code}')">
+          <div class="rec-icon">🖥</div>
+          <div class="rec-meta">
+            <div class="rec-name">${s.label}</div>
+            <div class="rec-addr">${s.code}</div>
+          </div>
+        </div>`).join('');
+    }
+
+    window.loadSession = function(c) {
+      const inp = document.getElementById('vi-code');
+      if (inp) inp.value = c;
+      if (typeof toast === 'function') toast('Code loaded — click Connect');
+    };
+
+    window.doLogout = function() {
+      if (typeof vncDisconnect === 'function') vncDisconnect();
+      clearAuthed();
+      window.location.href = 'login.html';
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const inp = document.getElementById('vi-code');
+      if (inp) inp.value = code;
+      const account = getAccount();
+      if (account) document.title = account.label + ' — DeltaRDT';
+      renderConnectRecent();
+    });
+  })();
+</script>
+
+</body>
+</html>

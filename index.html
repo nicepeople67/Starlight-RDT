@@ -54,7 +54,7 @@
     <div class="os-badges">
       <div class="os-badge"><span class="os-dot"></span>Windows 10/11</div>
       <div class="os-badge"><span class="os-dot"></span>macOS 12+</div>
-      <div class="os-badge"><span class="os-dot"></span>Linux / Ubuntu</div>
+      <div class="os-badge"><span class="os-dot"></span>Linux</div>
       <div class="os-badge"><span class="os-dot"></span>Free forever</div>
     </div>
   </section>
@@ -153,23 +153,23 @@
         <div class="dl-name">Windows</div>
         <div class="dl-desc">Windows 10 and 11. Runs as a background service. Optional auto-start with your PC.</div>
         <div class="dl-ver">v1.0.0 · 4.2 MB</div>
-        <button class="dl-btn" onclick="event.stopPropagation();triggerDownload('deltardt-setup.exe','Windows Installer')">Installer .exe <span class="dl-sz">↓ 4.2 MB</span></button>
-        <button class="dl-btn" onclick="event.stopPropagation();triggerDownload('deltardt-portable.zip','Windows Portable')" style="font-size:12px">Portable .zip <span class="dl-sz">↓ 3.1 MB</span></button>
+        <a class="dl-btn" href="downloads/deltardt-setup.exe" onclick="event.stopPropagation()">Installer .exe <span class="dl-sz">↓ 4.2 MB</span></a>
+        <a class="dl-btn" href="downloads/deltardt-portable.zip" onclick="event.stopPropagation()" style="font-size:12px">Portable .zip <span class="dl-sz">↓ 3.1 MB</span></a>
       </div>
       <div class="dl-card" onclick="openDlModal()">
         <span class="dl-os-icon"></span>
         <div class="dl-name">macOS</div>
         <div class="dl-desc">Universal binary — Intel and Apple Silicon. Requires macOS 12 Monterey or later.</div>
         <div class="dl-ver">v1.0.0 · 6.8 MB</div>
-        <button class="dl-btn" onclick="event.stopPropagation();triggerDownload('DeltaRDT.dmg','macOS App')">DeltaRDT.dmg <span class="dl-sz">↓ 6.8 MB</span></button>
+        <a class="dl-btn" href="downloads/DeltaRDT.dmg" onclick="event.stopPropagation()">DeltaRDT.dmg <span class="dl-sz">↓ 6.8 MB</span></a>
       </div>
       <div class="dl-card" onclick="openDlModal()">
         <span class="dl-os-icon">🐧</span>
         <div class="dl-name">Linux</div>
         <div class="dl-desc">Debian/Ubuntu .deb package or a standalone Python script. X11 and Wayland support.</div>
         <div class="dl-ver">v1.0.0 · 2.1 MB</div>
-        <button class="dl-btn" onclick="event.stopPropagation();triggerDownload('deltardt.deb','Linux .deb')">deb package <span class="dl-sz">↓ 2.1 MB</span></button>
-        <a class="dl-btn" href="agent/vnc_server.py" download onclick="event.stopPropagation()" style="font-size:12px">Python script <span class="dl-sz">↓ 48 KB</span></a>
+        <a class="dl-btn" href="downloads/deltardt.deb" onclick="event.stopPropagation()">.deb package <span class="dl-sz">↓ 2.1 MB</span></a>
+        <a class="dl-btn" href="agent/vnc_server.py" onclick="event.stopPropagation()" style="font-size:12px">Python script <span class="dl-sz">↓ 48 KB</span></a>
       </div>
     </div>
     <div style="margin-top:24px;text-align:center">
@@ -404,11 +404,11 @@
     <button class="modal-x" onclick="document.getElementById('dl-modal').classList.remove('open')">✕</button>
     <h3>Download DeltaRDT Agent</h3>
     <p class="modal-sub">Install on the PC you want to control. No download needed on the viewer side — just use the Connect page.</p>
-    <button class="mdl-dl" onclick="triggerDownload('deltardt-setup.exe','Windows Installer')"><span class="mdl-icon">🪟</span><div class="mdl-info"><div class="mdl-name">Windows Installer</div><div class="mdl-meta">deltardt-setup.exe · 4.2 MB · Windows 10/11</div></div><span class="mdl-arr">↓</span></button>
-    <button class="mdl-dl" onclick="triggerDownload('deltardt-portable.zip','Windows Portable')"><span class="mdl-icon">📦</span><div class="mdl-info"><div class="mdl-name">Windows Portable</div><div class="mdl-meta">deltardt-portable.zip · 3.1 MB · No install needed</div></div><span class="mdl-arr">↓</span></button>
-    <button class="mdl-dl" onclick="triggerDownload('DeltaRDT.dmg','macOS App')"><span class="mdl-icon"></span><div class="mdl-info"><div class="mdl-name">macOS App</div><div class="mdl-meta">DeltaRDT.dmg · 6.8 MB · Intel &amp; Apple Silicon</div></div><span class="mdl-arr">↓</span></button>
-    <button class="mdl-dl" onclick="triggerDownload('deltardt.deb','Linux .deb')"><span class="mdl-icon">🐧</span><div class="mdl-info"><div class="mdl-name">Linux .deb</div><div class="mdl-meta">deltardt_1.0.0_amd64.deb · 2.1 MB · Debian/Ubuntu</div></div><span class="mdl-arr">↓</span></button>
-    <a class="mdl-dl" href="agent/vnc_server.py" download><span class="mdl-icon">🐍</span><div class="mdl-info"><div class="mdl-name">Python Script (all platforms)</div><div class="mdl-meta">vnc_server.py · 48 KB · Requires Python 3.9+</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="downloads/deltardt-setup.exe"><span class="mdl-icon">🪟</span><div class="mdl-info"><div class="mdl-name">Windows Installer</div><div class="mdl-meta">deltardt-setup.exe · 4.2 MB · Windows 10/11</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="downloads/deltardt-portable.zip"><span class="mdl-icon">📦</span><div class="mdl-info"><div class="mdl-name">Windows Portable</div><div class="mdl-meta">deltardt-portable.zip · 3.1 MB · No install needed</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="downloads/DeltaRDT.dmg"><span class="mdl-icon"></span><div class="mdl-info"><div class="mdl-name">macOS App</div><div class="mdl-meta">DeltaRDT.dmg · 6.8 MB · Intel &amp; Apple Silicon</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="downloads/deltardt.deb"><span class="mdl-icon">🐧</span><div class="mdl-info"><div class="mdl-name">Linux .deb</div><div class="mdl-meta">deltardt_1.0.0_amd64.deb · 2.1 MB · Debian/Ubuntu</div></div><span class="mdl-arr">↓</span></a>
+    <a class="mdl-dl" href="agent/vnc_server.py"><span class="mdl-icon">🐍</span><div class="mdl-info"><div class="mdl-name">Python Script (all platforms)</div><div class="mdl-meta">vnc_server.py · 48 KB · Requires Python 3.9+</div></div><span class="mdl-arr">↓</span></a>
     <div class="modal-note">After installing, a <strong>session code</strong> appears on screen. Share it — the viewer connects at <span class="code-inline">deltardt.app → Connect Now</span></div>
   </div>
 </div>
