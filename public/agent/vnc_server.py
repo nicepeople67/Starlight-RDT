@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-"""
-DeltaRDT - A custom VNC server implementation
-Implements RFB Protocol 3.8 from scratch
-Supports: Raw, CopyRect, and Hextile encodings
-"""
-
 import socket
 import struct
 import threading
@@ -19,9 +12,6 @@ from typing import Optional, Tuple
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 log = logging.getLogger('DeltaRDT')
 
-# ──────────────────────────────────────────────
-# Platform screen capture (cross-platform)
-# ──────────────────────────────────────────────
 try:
     import mss
     import mss.tools
@@ -43,7 +33,6 @@ except ImportError:
 
 
 def get_screen_size() -> Tuple[int, int]:
-    """Get the screen dimensions."""
     if HAS_MSS:
         with mss.mss() as sct:
             m = sct.monitors[1]
@@ -55,12 +44,10 @@ def get_screen_size() -> Tuple[int, int]:
 
 
 def capture_screen_rgb(x: int, y: int, w: int, h: int) -> bytes:
-    """Capture a region of the screen and return raw RGB bytes."""
     if HAS_MSS:
         with mss.mss() as sct:
             mon = {"top": y, "left": x, "width": w, "height": h}
             sct_img = sct.grab(mon)
-            # mss gives BGRA, convert to RGB
             raw = bytes(sct_img.raw)
             rgb = bytearray(w * h * 3)
             for i in range(w * h):
@@ -72,34 +59,21 @@ def capture_screen_rgb(x: int, y: int, w: int, h: int) -> bytes:
         img = ImageGrab.grab(bbox=(x, y, x+w, y+h)).convert('RGB')
         return img.tobytes()
 
-    # Fallback: solid grey screen
     return bytes([128, 128, 128] * (w * h))
 
-
-# ──────────────────────────────────────────────
-# RFB Protocol Constants
-# ──────────────────────────────────────────────
 RFB_VERSION      = b'RFB 003.008\n'
-
-# Security types
 SEC_NONE         = 1
 SEC_VNC_AUTH     = 2
-
-# Server→Client message types
 MSG_FRAMEBUFFER_UPDATE   = 0
 MSG_SET_COLOUR_MAP       = 1
 MSG_BELL                 = 2
 MSG_SERVER_CUT_TEXT      = 3
-
-# Client→Server message types
 CMSG_SET_PIXEL_FORMAT    = 0
 CMSG_SET_ENCODINGS       = 2
 CMSG_FB_UPDATE_REQUEST   = 3
 CMSG_KEY_EVENT           = 4
 CMSG_POINTER_EVENT       = 5
 CMSG_CLIENT_CUT_TEXT     = 6
-
-# Encoding types
 ENC_RAW          = 0
 ENC_COPYRECT     = 1
 ENC_HEXTILE      = 5
@@ -107,35 +81,26 @@ ENC_ZLIB         = 6
 ENC_TIGHT        = 7
 ENC_CURSOR       = -239
 ENC_DESKTOP_SIZE = -223
-
-# Hextile sub-encoding flags
 HT_RAW              = 1
 HT_BACKGROUND       = 2
 HT_FOREGROUND       = 4
 HT_ANY_SUBRECTS     = 8
 HT_SUBRECTS_COLORED = 16
 
-
-# ──────────────────────────────────────────────
-# Pixel format (32-bit BGRA)
-# ──────────────────────────────────────────────
-# bits-per-pixel, depth, big-endian, true-colour,
-# r-max, g-max, b-max, r-shift, g-shift, b-shift, padding(x3)
 PIXEL_FORMAT = struct.pack(
     '>BBBBHHHBBB3x',
-    32,     # bits per pixel
-    24,     # depth
-    0,      # big-endian flag
-    1,      # true-colour flag
-    255,    # red max
-    255,    # green max
-    255,    # blue max
-    16,     # red shift
-    8,      # green shift
-    0,      # blue shift
+    32,   
+    24,    
+    0,  # big endian flag. 0 cuz it's little endian
+    1,
+    255,
+    255,
+    255,
+    16,   
+    8,     
+    0,     
 )
 
-# Runtime pixel format (can be changed by client)
 class PixelFormat:
     def __init__(self):
         self.bpp        = 32
@@ -150,7 +115,6 @@ class PixelFormat:
         self.b_shift    = 0
 
     def pack_pixel(self, r: int, g: int, b: int) -> bytes:
-        """Pack an RGB triple into the current pixel format."""
         if self.bpp == 32:
             val = (r << self.r_shift) | (g << self.g_shift) | (b << self.b_shift)
             if self.big_endian:
@@ -169,10 +133,6 @@ class PixelFormat:
     def bytes_per_pixel(self) -> int:
         return self.bpp // 8
 
-
-# ──────────────────────────────────────────────
-# VNC Client Handler
-# ──────────────────────────────────────────────
 class VNCClientHandler(threading.Thread):
     def __init__(self, conn: socket.socket, addr, server: 'VNCServer'):
         super().__init__(daemon=True)
@@ -183,7 +143,6 @@ class VNCClientHandler(threading.Thread):
         self.encodings = [ENC_RAW]
         self.running = True
 
-    # ── I/O helpers ──────────────────────────
     def send(self, data: bytes):
         try:
             self.conn.sendall(data)
@@ -204,15 +163,12 @@ class VNCClientHandler(threading.Thread):
                 return buf
         return buf
 
-    # ── Handshake ────────────────────────────
     def do_handshake(self) -> bool:
-        # Version negotiation
         self.send(RFB_VERSION)
         client_ver = self.recv_exact(12)
         log.info(f"Client version: {client_ver.strip()}")
 
         if self.server.password:
-            # Offer VNC auth
             self.send(struct.pack('!BB', 1, SEC_VNC_AUTH))
             chosen = self.recv_exact(1)
             if chosen != struct.pack('B', SEC_VNC_AUTH):
@@ -221,16 +177,10 @@ class VNCClientHandler(threading.Thread):
             if not self._vnc_auth():
                 return False
         else:
-            # Offer no auth
             self.send(struct.pack('!BB', 1, SEC_NONE))
             chosen = self.recv_exact(1)
-            # Security result: OK
             self.send(struct.pack('!I', 0))
-
-        # ClientInit
         shared = self.recv_exact(1)
-
-        # ServerInit: width, height, pixel format, name
         w, h = self.server.width, self.server.height
         name = b'DeltaRDT'
         self.send(
@@ -243,34 +193,28 @@ class VNCClientHandler(threading.Thread):
         return True
 
     def _vnc_auth(self) -> bool:
-        """DES-based VNC authentication."""
         challenge = os.urandom(16)
         self.send(challenge)
         response = self.recv_exact(16)
-        # Verify using password
         expected = self._des_encrypt(self.server.password, challenge)
         if response == expected:
-            self.send(struct.pack('!I', 0))   # auth OK
+            self.send(struct.pack('!I', 0))
             return True
-        self.send(struct.pack('!I', 1))       # auth failed
+        self.send(struct.pack('!I', 1))
         reason = b'Authentication failed'
         self.send(struct.pack('!I', len(reason)) + reason)
         return False
 
     @staticmethod
     def _des_encrypt(password: str, challenge: bytes) -> bytes:
-        """VNC uses bit-reversed DES. Uses pyDes if available, else fallback."""
         try:
             import pyDes
             key = password[:8].ljust(8, '\0').encode('latin-1')
-            # VNC reverses bits in each byte of the key
             key = bytes(int('{:08b}'.format(b)[::-1], 2) for b in key)
             d = pyDes.des(key, pyDes.ECB, pad=None, padmode=pyDes.PAD_NORMAL)
             return d.encrypt(challenge)
         except ImportError:
-            return b'\x00' * 16  # fallback (auth will fail gracefully)
-
-    # ── Message loop ─────────────────────────
+            return b'\x00' * 16
     def run(self):
         try:
             if not self.do_handshake():
@@ -305,7 +249,7 @@ class VNCClientHandler(threading.Thread):
             log.info(f"Client disconnected: {self.addr}")
 
     def _handle_set_pixel_format(self):
-        data = self.recv_exact(19)  # 3 padding + 16 format bytes
+        data = self.recv_exact(19)
         fmt = data[3:]
         self.pf.bpp, self.pf.depth, big, tc = struct.unpack_from('>BBBB', fmt)
         self.pf.big_endian = bool(big)
@@ -365,33 +309,24 @@ class VNCClientHandler(threading.Thread):
         _, length = struct.unpack('!3xI', data)
         self.recv_exact(length)
 
-    # ── Framebuffer encoding ──────────────────
     def _send_framebuffer_update(self, x, y, w, h, incremental):
-        # Clamp to screen
         sw, sh = self.server.width, self.server.height
         x = max(0, min(x, sw - 1))
         y = max(0, min(y, sh - 1))
         w = max(1, min(w, sw - x))
         h = max(1, min(h, sh - y))
-
         rgb = capture_screen_rgb(x, y, w, h)
-
-        # Choose encoding
         if ENC_HEXTILE in self.encodings:
             rect_data = self._encode_hextile(rgb, w, h)
             enc = ENC_HEXTILE
         else:
             rect_data = self._encode_raw(rgb, w, h)
             enc = ENC_RAW
-
-        # FramebufferUpdate header: type(1) + padding(1) + num_rects(2)
         header = struct.pack('!BBH', MSG_FRAMEBUFFER_UPDATE, 0, 1)
-        # Rectangle header: x, y, w, h, encoding
         rect_hdr = struct.pack('!HHHHi', x, y, w, h, enc)
         self.send(header + rect_hdr + rect_data)
 
     def _encode_raw(self, rgb: bytes, w: int, h: int) -> bytes:
-        """Convert RGB to current pixel format, raw encoding."""
         bpp = self.pf.bytes_per_pixel()
         out = bytearray(w * h * bpp)
         for i in range(w * h):
@@ -401,10 +336,6 @@ class VNCClientHandler(threading.Thread):
         return bytes(out)
 
     def _encode_hextile(self, rgb: bytes, w: int, h: int) -> bytes:
-        """
-        Hextile encoding: split into 16×16 tiles.
-        Uses background + subrect optimisation when possible.
-        """
         bpp = self.pf.bytes_per_pixel()
         out = bytearray()
         cols = (w + 15) // 16
@@ -418,16 +349,12 @@ class VNCClientHandler(threading.Thread):
                 ty = tr * 16
                 tw = min(16, w - tx)
                 th = min(16, h - ty)
-
-                # Extract tile pixels as packed pixel bytes
                 pixels = []
                 for row in range(th):
                     for col in range(tw):
                         idx = ((ty + row) * w + (tx + col)) * 3
                         r, g, b = rgb[idx], rgb[idx+1], rgb[idx+2]
                         pixels.append(self.pf.pack_pixel(r, g, b))
-
-                # Find background colour (most common pixel)
                 from collections import Counter
                 freq = Counter(pixels)
                 bg_px = freq.most_common(1)[0][0]
@@ -441,7 +368,7 @@ class VNCClientHandler(threading.Thread):
 
                 subencoding = HT_BACKGROUND
                 if prev_bg == bg_px:
-                    subencoding = 0  # reuse background
+                    subencoding = 0
 
                 if subrects:
                     subencoding |= HT_ANY_SUBRECTS | HT_SUBRECTS_COLORED
@@ -463,7 +390,6 @@ class VNCClientHandler(threading.Thread):
 
     @staticmethod
     def _keysym_to_pyautogui(keysym: int) -> Optional[str]:
-        """Map X11 keysym to pyautogui key name."""
         mapping = {
             0xff08: 'backspace', 0xff09: 'tab',    0xff0d: 'return',
             0xff1b: 'escape',    0xff50: 'home',   0xff51: 'left',
@@ -483,11 +409,6 @@ class VNCClientHandler(threading.Thread):
         if 0x20 <= keysym <= 0x7e:
             return chr(keysym)
         return None
-
-
-# ──────────────────────────────────────────────
-# VNC Server
-# ──────────────────────────────────────────────
 class VNCServer:
     def __init__(self, host='0.0.0.0', port=5900, password=''):
         self.host     = host
@@ -519,11 +440,6 @@ class VNCServer:
             log.info("Shutting down DeltaRDT")
         finally:
             self._sock.close()
-
-
-# ──────────────────────────────────────────────
-# Entry point
-# ──────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(description='DeltaRDT – Custom VNC Server')
     parser.add_argument('--host',     default='0.0.0.0',  help='Bind address')
@@ -536,7 +452,7 @@ def main():
         log.warning("Install with:  pip install mss  OR  pip install Pillow")
         log.warning("Screen capture will return a blank grey screen.")
     if not HAS_PYAUTOGUI:
-        log.warning("pyautogui not installed — keyboard/mouse input disabled.")
+        log.warning("pyautogui not installed, keyboard/mouse input disabled.")
         log.warning("Install with:  pip install pyautogui")
 
     server = VNCServer(host=args.host, port=args.port, password=args.password)
