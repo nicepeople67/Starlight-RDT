@@ -1,11 +1,11 @@
 {
   "projects": {
-    "default": "delta-42a39"
+    "default": "starlight-28e40"
   },
   "targets": {
     "delta-42a39": {
       "hosting": {
-        "main": ["deltardt"]
+        "main": ["starlightrdt"]
       }
     }
   }
