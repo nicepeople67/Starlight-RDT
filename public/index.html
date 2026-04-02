@@ -19,45 +19,40 @@
 <video id="remoteVideo" autoplay playsinline style="width:80%; border:1px solid black;"></video>
 
 <script type="module">
-  // 🔥 FIREBASE IMPORTS
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc,
-    updateDoc,
-    onSnapshot,
-    collection,
-    addDoc
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  onSnapshot,
+  collection,
+  addDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // 🔧 REPLACE THIS WITH YOUR CONFIG
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "deltardt.firebaseapp.com",
-    projectId: "deltardt",
-    storageBucket: "deltardt.appspot.com",
-    messagingSenderId: "YOUR_ID",
-    appId: "YOUR_APP_ID"
-  };
+// 🔧 PUT YOUR FIREBASE CONFIG HERE
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  let pc;
-  let roomRef;
+let pc;
+let roomRef;
 
-  const servers = {
-    iceServers: [
-      { urls: "stun:stun.l.google.com:19302" }
-    ]
-  };
+const servers = {
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+};
 
-  const remoteVideo = document.getElementById("remoteVideo");
+const video = document.getElementById("remoteVideo");
 
-  // 🚀 HOST
-  async function startHost() {
+// ---------------- HOST ----------------
+async function startHost() {
+  try {
     pc = new RTCPeerConnection(servers);
 
     const stream = await navigator.mediaDevices.getDisplayMedia();
@@ -69,10 +64,7 @@
     await pc.setLocalDescription(offer);
 
     await setDoc(roomRef, {
-      offer: {
-        type: offer.type,
-        sdp: offer.sdp
-      }
+      offer: { type: offer.type, sdp: offer.sdp }
     });
 
     pc.onicecandidate = (event) => {
@@ -81,71 +73,66 @@
       }
     };
 
-    onSnapshot(roomRef, async (snapshot) => {
-      const data = snapshot.data();
+    onSnapshot(roomRef, (snap) => {
+      const data = snap.data();
       if (data?.answer && !pc.currentRemoteDescription) {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        pc.setRemoteDescription(new RTCSessionDescription(data.answer));
       }
     });
 
-    alert("Room ID: " + roomRef.id);
+    alert("ROOM ID: " + roomRef.id);
+
+  } catch (e) {
+    alert("Error: " + e.message);
+    console.error(e);
+  }
+}
+
+// ---------------- JOIN ----------------
+async function joinRoom() {
+  const roomId = document.getElementById("roomInput").value;
+
+  roomRef = doc(db, "rooms", roomId);
+  const snap = await getDoc(roomRef);
+
+  if (!snap.exists()) {
+    alert("Room not found");
+    return;
   }
 
-  // 👀 VIEWER
-  async function joinRoom() {
-    const roomId = document.getElementById("roomInput").value;
+  pc = new RTCPeerConnection(servers);
 
-    if (!roomId) {
-      alert("Enter Room ID");
-      return;
+  pc.ontrack = (event) => {
+    video.srcObject = event.streams[0];
+  };
+
+  await pc.setRemoteDescription(new RTCSessionDescription(snap.data().offer));
+
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  await updateDoc(roomRef, {
+    answer: { type: answer.type, sdp: answer.sdp }
+  });
+
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      addDoc(collection(roomRef, "candidates"), event.candidate.toJSON());
     }
+  };
 
-    roomRef = doc(db, "rooms", roomId);
-    const roomSnap = await getDoc(roomRef);
-
-    if (!roomSnap.exists()) {
-      alert("Room not found");
-      return;
-    }
-
-    const roomData = roomSnap.data();
-
-    pc = new RTCPeerConnection(servers);
-
-    pc.ontrack = (event) => {
-      remoteVideo.srcObject = event.streams[0];
-    };
-
-    await pc.setRemoteDescription(new RTCSessionDescription(roomData.offer));
-
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-
-    await updateDoc(roomRef, {
-      answer: {
-        type: answer.type,
-        sdp: answer.sdp
+  onSnapshot(collection(roomRef, "candidates"), (snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+      if (change.type === "added") {
+        pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
       }
     });
+  });
+}
 
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        addDoc(collection(roomRef, "candidates"), event.candidate.toJSON());
-      }
-    };
-
-    onSnapshot(collection(roomRef, "candidates"), (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === "added") {
-          pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-        }
-      });
-    });
-  }
-
-  // 🔥 BUTTON FIX (IMPORTANT)
-  document.getElementById("startBtn").onclick = startHost;
-  document.getElementById("joinBtn").onclick = joinRoom;
+// buttons
+document.getElementById("startBtn").onclick = startHost;
+document.getElementById("joinBtn").onclick = joinRoom;
 
 </script>
 
