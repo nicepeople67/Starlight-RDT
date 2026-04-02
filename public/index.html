@@ -7,19 +7,19 @@
 
 <h2>DeltaRDT Remote</h2>
 
-<button onclick="startHost()">Start Sharing</button>
+<button id="startBtn">Start Sharing</button>
 
 <br><br>
 
 <input id="roomInput" placeholder="Enter Room ID">
-<button onclick="joinRoom()">Join</button>
+<button id="joinBtn">Join</button>
 
 <br><br>
 
 <video id="remoteVideo" autoplay playsinline style="width:80%; border:1px solid black;"></video>
 
 <script type="module">
-  // 🔥 IMPORT FIREBASE
+  // 🔥 FIREBASE IMPORTS
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
     getFirestore,
@@ -32,11 +32,14 @@
     addDoc
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // 🔧 YOUR FIREBASE CONFIG
+  // 🔧 REPLACE THIS WITH YOUR CONFIG
   const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT"
+    authDomain: "deltardt.firebaseapp.com",
+    projectId: "deltardt",
+    storageBucket: "deltardt.appspot.com",
+    messagingSenderId: "YOUR_ID",
+    appId: "YOUR_APP_ID"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -53,17 +56,15 @@
 
   const remoteVideo = document.getElementById("remoteVideo");
 
-  // 🚀 HOST (HOME PC)
-  window.startHost = async () => {
+  // 🚀 HOST
+  async function startHost() {
     pc = new RTCPeerConnection(servers);
 
-    // Share screen
     const stream = await navigator.mediaDevices.getDisplayMedia();
     stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
-    // Create room
     roomRef = doc(collection(db, "rooms"));
-    
+
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
@@ -74,14 +75,12 @@
       }
     });
 
-    // ICE
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         addDoc(collection(roomRef, "candidates"), event.candidate.toJSON());
       }
     };
 
-    // Listen for answer
     onSnapshot(roomRef, async (snapshot) => {
       const data = snapshot.data();
       if (data?.answer && !pc.currentRemoteDescription) {
@@ -90,19 +89,29 @@
     });
 
     alert("Room ID: " + roomRef.id);
-  };
+  }
 
-  // 👀 VIEWER (OFFICE PC)
-  window.joinRoom = async () => {
+  // 👀 VIEWER
+  async function joinRoom() {
     const roomId = document.getElementById("roomInput").value;
-    roomRef = doc(db, "rooms", roomId);
 
+    if (!roomId) {
+      alert("Enter Room ID");
+      return;
+    }
+
+    roomRef = doc(db, "rooms", roomId);
     const roomSnap = await getDoc(roomRef);
+
+    if (!roomSnap.exists()) {
+      alert("Room not found");
+      return;
+    }
+
     const roomData = roomSnap.data();
 
     pc = new RTCPeerConnection(servers);
 
-    // Receive stream
     pc.ontrack = (event) => {
       remoteVideo.srcObject = event.streams[0];
     };
@@ -119,14 +128,12 @@
       }
     });
 
-    // ICE
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         addDoc(collection(roomRef, "candidates"), event.candidate.toJSON());
       }
     };
 
-    // Listen for ICE
     onSnapshot(collection(roomRef, "candidates"), (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
@@ -134,7 +141,12 @@
         }
       });
     });
-  };
+  }
+
+  // 🔥 BUTTON FIX (IMPORTANT)
+  document.getElementById("startBtn").onclick = startHost;
+  document.getElementById("joinBtn").onclick = joinRoom;
+
 </script>
 
 </body>
