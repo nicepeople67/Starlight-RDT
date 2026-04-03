@@ -1,3 +1,16 @@
+#!/usr/bin/env python3
+"""
+DeltaRDT Relay Server
+
+Two WebSocket paths:
+  /register/<code>   — agent connects here, registers its session code
+  /connect/<code>    — browser viewer connects here, gets bridged to agent
+
+HTTP paths (same port):
+  GET  /api/status          — server health check
+  GET  /api/sessions        — list active agent sessions
+"""
+
 import asyncio, websockets, logging, argparse, json, time
 from websockets.exceptions import ConnectionClosed
 

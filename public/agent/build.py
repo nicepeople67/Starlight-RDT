@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+"""
+DeltaRDT build script — run this on the target OS to produce the installer.
+
+  Windows : produces  dist/deltardt-setup.exe  (via PyInstaller + Inno Setup)
+            and       dist/deltardt-portable.zip
+  macOS   : produces  dist/DeltaRDT.dmg        (via PyInstaller + create-dmg)
+  Linux   : produces  dist/deltardt.deb         (via PyInstaller + dpkg-deb)
+
+Usage:
+  pip install -r requirements.txt
+  python build.py
+"""
+
 import os, sys, shutil, platform, subprocess, zipfile, tempfile
 from pathlib import Path
 
@@ -59,8 +73,10 @@ def pyinstaller_base(extra_args=None):
         '--hidden-import', 'websockets',
         '--hidden-import', 'pystray',
         '--hidden-import', 'pyperclip',
-        HERE / 'agent.py',
     ]
+    if PLAT == 'Darwin':
+        cmd += ['--hidden-import', 'rumps']
+    cmd += [HERE / 'agent.py']
     run(cmd)
 
 

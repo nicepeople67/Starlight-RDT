@@ -2,5 +2,13 @@ mss>=9.0.0
 Pillow>=10.0.0
 pyautogui>=0.9.54
 websockets>=12.0
-pystray>=0.19.5
 pyperclip>=1.9.0
+
+# Windows tray icon
+pystray>=0.19.5
+
+# macOS tray icon (macOS only) — uncomment if on macOS:
+# rumps>=0.4.0
+
+# Linux tray icon comes from system GTK, not pip:
+# sudo apt install gir1.2-appindicator3-0.1 python3-gi

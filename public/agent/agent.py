@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+"""
+DeltaRDT Agent
+- Runs a local VNC server on 127.0.0.1:5900
+- Connects to the relay and registers the session code
+- When a viewer connects, bridges VNC traffic through the relay WebSocket
+- Shows a system tray icon with the code on Windows/macOS/Linux
+"""
+
 import os, sys, socket, struct, threading, time, json, secrets, logging, argparse, platform, asyncio
 from pathlib import Path
 from typing import Optional, Tuple
@@ -12,6 +21,7 @@ CONFIG_DIR  = Path.home() / '.deltardt'
 CONFIG_FILE = CONFIG_DIR / 'config.json'
 PLATFORM    = platform.system()
 
+# ── Optional imports ──────────────────────────────────────────────────────────
 try:
     import mss
     HAS_MSS = True
@@ -37,6 +47,8 @@ try:
 except ImportError:
     HAS_WS = False
 
+
+# ── Screen capture ────────────────────────────────────────────────────────────
 def get_screen_size() -> Tuple[int, int]:
     if HAS_MSS:
         with mss.mss() as s:
@@ -52,19 +64,24 @@ def capture_screen(x: int, y: int, w: int, h: int) -> bytes:
     if HAS_MSS:
         with mss.mss() as s:
             img = s.grab({'top': y, 'left': x, 'width': w, 'height': h})
-            raw = bytes(img.raw)
-            out = bytearray(w * h * 4)
-            for i in range(w * h):
-                out[i*4]   = raw[i*4+2]  # R
-                out[i*4+1] = raw[i*4+1]  # G
-                out[i*4+2] = raw[i*4]    # B
-                out[i*4+3] = 255
-            return bytes(out)
+            # mss gives BGRA — send as-is; JS copyRaw reads [si]=B,[si+1]=G,[si+2]=R
+            return bytes(img.raw)
     if HAS_PIL:
+        # PIL gives RGBA — reorder to BGRA for the JS decoder
         img = ImageGrab.grab(bbox=(x, y, x+w, y+h)).convert('RGBA')
-        return img.tobytes()
-    return bytes([40, 40, 40, 255] * (w * h))
+        raw = img.tobytes()
+        out = bytearray(w * h * 4)
+        for i in range(w * h):
+            out[i*4]   = raw[i*4+2]  # B
+            out[i*4+1] = raw[i*4+1]  # G
+            out[i*4+2] = raw[i*4]    # R
+            out[i*4+3] = 255
+        return bytes(out)
+    # Fallback — mid-grey BGRA
+    return bytes([100, 100, 100, 255] * (w * h))
 
+
+# ── Config / session code ─────────────────────────────────────────────────────
 class Config:
     def __init__(self):
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -100,9 +117,27 @@ class Config:
         hours = (secs % 86400) // 3600
         return f'Refreshes in {days}d {hours}h'
 
+
+# ── RFB Protocol constants ────────────────────────────────────────────────────
 RFB_VER   = b'RFB 003.008\n'
 SEC_NONE  = 1
-PIX_FMT   = struct.pack('>BBBBHHHBBB3x', 32, 24, 0, 1, 255, 255, 255, 16, 8, 0)
+# Pixel format: 32bpp BGRA  (B at byte 0, G at 1, R at 2, A at 3)
+# r-shift=16 means red value goes into bits 16-23 of the 32-bit word,
+# but since we're little-endian that puts it at byte index 2.
+# b-shift=0 puts blue at byte index 0.
+PIX_FMT = struct.pack(
+    '>BBBBHHHBBB3x',
+    32,   # bits-per-pixel
+    24,   # depth
+    0,    # big-endian: False (little-endian 32-bit words)
+    1,    # true-colour: True
+    255,  # red max
+    255,  # green max
+    255,  # blue max
+    16,   # red shift   → byte index 2 in LE word
+    8,    # green shift → byte index 1
+    0,    # blue shift  → byte index 0
+)
 
 KEYSYM = {
     0xff08:'backspace', 0xff09:'tab',    0xff0d:'enter',   0xff1b:'escape',
@@ -114,6 +149,8 @@ KEYSYM = {
     **{0xffbe+i: f'f{i+1}' for i in range(12)},
 }
 
+
+# ── RFB client handler (one per viewer connection) ────────────────────────────
 class RFBClient(threading.Thread):
     def __init__(self, conn: socket.socket, addr, server: 'VNCServer'):
         super().__init__(daemon=True)
@@ -172,25 +209,25 @@ class RFBClient(threading.Thread):
             if not hdr:
                 break
             t = hdr[0]
-            if t == 0:
+            if t == 0:    # SetPixelFormat
                 self._recv(19)
-            elif t == 2:
+            elif t == 2:  # SetEncodings
                 d = self._recv(3)
                 count = struct.unpack('!xH', d)[0]
                 self._recv(count * 4)
-            elif t == 3:
+            elif t == 3:  # FramebufferUpdateRequest
                 d = self._recv(9)
                 _, x, y, w, h = struct.unpack('!BHHHH', d)
                 self._send_update(x, y, w, h)
-            elif t == 4:
+            elif t == 4:  # KeyEvent
                 d = self._recv(7)
                 down, _, sym = struct.unpack('!BxxI', d)
                 self._handle_key(down, sym)
-            elif t == 5:
+            elif t == 5:  # PointerEvent
                 d = self._recv(5)
                 mask, x, y = struct.unpack('!BHH', d)
                 self._handle_ptr(mask, x, y)
-            elif t == 6:
+            elif t == 6:  # ClientCutText
                 d = self._recv(7)
                 length = struct.unpack('!3xI', d)[0]
                 self._recv(length)
@@ -242,6 +279,8 @@ class RFBClient(threading.Thread):
         except Exception:
             pass
 
+
+# ── Local VNC server ──────────────────────────────────────────────────────────
 class VNCServer(threading.Thread):
     def __init__(self, port: int = VNC_PORT):
         super().__init__(daemon=True)
@@ -272,7 +311,16 @@ class VNCServer(threading.Thread):
             except Exception:
                 pass
 
+
+# ── Relay connector ───────────────────────────────────────────────────────────
 class RelayConnector:
+    """
+    Connects to relay at /register/<code>.
+    When relay sends {"status": "viewer_connected"}, opens a raw TCP socket
+    to the local VNC server and bridges all subsequent bytes bidirectionally
+    over the relay WebSocket.
+    """
+
     def __init__(self, relay_url: str, code: str, vnc_port: int,
                  on_status=None):
         self.relay_url = relay_url.rstrip('/')
@@ -341,6 +389,7 @@ class RelayConnector:
                         log.error(f'Relay error: {msg["error"]}')
 
                 elif isinstance(raw_msg, bytes):
+                    # Raw binary during bridging (shouldn't happen here but handle it)
                     pass
 
     async def _bridge_vnc(self, relay_ws):
@@ -400,6 +449,8 @@ class RelayConnector:
             pass
         log.info('VNC bridge closed')
 
+
+# ── System tray ───────────────────────────────────────────────────────────────
 class TrayApp:
     def __init__(self, config: Config, vnc: VNCServer, relay: RelayConnector):
         self.config = config
@@ -581,6 +632,8 @@ class TrayApp:
         except KeyboardInterrupt:
             pass
 
+
+# ── Entry point ───────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(description='DeltaRDT Agent')
     parser.add_argument('--relay',    default=RELAY_URL,  help='Relay WebSocket URL')

@@ -1,3 +1,10 @@
+/**
+ * DeltaRDT — RFB 3.8 Client
+ * Full VNC protocol over WebSocket.
+ * Encodings: Raw, RRE, Hextile, DesktopSize
+ */
+
+/* ─── State ─── */
 let ws       = null;
 let rfbState = 'idle';
 let ibuf     = new Uint8Array(0);
@@ -13,11 +20,13 @@ let fpsTimer   = null;
 let pointerBtns = 0;
 let currentScale = 1;
 
+/* ─── Init (called after DOM ready) ─── */
 function rfbInit() {
   canvas = document.getElementById('remote-canvas');
   ctx    = canvas.getContext('2d');
 }
 
+/* ─── Buffer helpers ─── */
 function bufAppend(data) {
   const n = new Uint8Array(ibuf.length + data.byteLength);
   n.set(ibuf);
@@ -34,6 +43,7 @@ function readS32()  { const v = new DataView(ibuf.buffer, ibuf.byteOffset, 4).ge
 function sendRaw(data)    { if (ws && ws.readyState === 1) ws.send(data); }
 function sendBytes(...b)  { sendRaw(new Uint8Array(b).buffer); }
 
+/* ─── Connect ─── */
 function vncConnect() {
   const relay = document.getElementById('vi-relay').value.trim();
   const code  = document.getElementById('vi-code').value.trim().replace(/-/g,'').toUpperCase();
@@ -57,7 +67,7 @@ function vncConnect() {
   ws = new WebSocket(url);
   ws.binaryType = 'arraybuffer';
 
-  ws.onopen = () => setVLoading(true, 'Waiting for agent…');
+  ws.onopen = () => setVLoading(true, 'Connected to relay — waiting for agent…');
 
   ws.onmessage = e => {
     if (typeof e.data === 'string') {
@@ -66,13 +76,14 @@ function vncConnect() {
         if (msg.error) {
           setVStatus('err', 'Error');
           setVLoading(false);
-          toast('Relay: ' + msg.error, 'err');
+          toast('⚠ ' + msg.error, 'err');
           resetVUI();
           ws.close();
         }
       } catch (_) {}
       return;
     }
+    if (rfbState === 'version') setVLoading(true, 'Agent found — RFB handshake…');
     bufAppend(e.data);
     try { pump(); } catch(err) { toast('Protocol error: ' + err.message, 'err'); }
   };
@@ -103,6 +114,7 @@ function vncDisconnect() {
   resetVUI();
 }
 
+/* ─── RFB state machine ─── */
 function pump() {
   for (let i = 0; i < 500; i++) {
     const before = ibuf.length;
@@ -152,14 +164,14 @@ function doSecResult() {
 }
 
 function doClientInit() {
-  sendBytes(1);
+  sendBytes(1); // shared flag
   rfbState = 'serverinit';
 }
 
 function doServerInit() {
   if (avail() < 24) return false;
   fbW = readU16(); fbH = readU16();
-  consume(16); // we'll set our own
+  consume(16); // server pixel format (we'll set our own)
   const nl = readU32();
   if (avail() < nl) return false;
   const name = new TextDecoder().decode(consume(nl));
@@ -192,6 +204,7 @@ function doServerInit() {
   return true;
 }
 
+/* ─── Server messages ─── */
 function doMessage() {
   if (avail() < 1) return false;
   const t = ibuf[0];
@@ -231,7 +244,7 @@ function doFBUpdate() {
     } else if (enc === 5) {  // Hextile
       if (!doHextile(x, y, w, h)) return false;
 
-    } else if (enc === -223) {
+    } else if (enc === -223) { // DesktopSize
       fbW = w; fbH = h;
       canvas.width = w; canvas.height = h;
       imgData = ctx.createImageData(w, h);
@@ -251,9 +264,9 @@ function copyRaw(d, x, y, w, h) {
     for (let c = 0; c < w; c++) {
       const si = (r*w + c)*4;
       const di = ((y+r)*fbW + (x+c))*4;
-      imgData.data[di]   = d[si+2]; // server sends BGR0
-      imgData.data[di+1] = d[si+1];
-      imgData.data[di+2] = d[si];  
+      imgData.data[di]   = d[si+2]; // R  (wire is BGRA: B=si, G=si+1, R=si+2)
+      imgData.data[di+1] = d[si+1]; // G
+      imgData.data[di+2] = d[si];   // B
       imgData.data[di+3] = 255;
     }
   }
@@ -318,20 +331,21 @@ function doCutText() {
   return true;
 }
 
+/* ─── Send messages ─── */
 function sendPixelFormat() {
-  // Request 32bpp BGR0 little-endian 
+  // Request 32bpp BGR0 little-endian (standard VNC format)
   const b = new DataView(new ArrayBuffer(20));
-  b.setUint8(0, 0);
-  b.setUint8(4, 32);
-  b.setUint8(5, 24);
-  b.setUint8(6, 0);         
-  b.setUint8(7, 1);         
-  b.setUint16(8,  255, false); 
-  b.setUint16(10, 255, false); 
-  b.setUint16(12, 255, false);
-  b.setUint8(14, 16);
-  b.setUint8(15, 8);
-  b.setUint8(16, 0);
+  b.setUint8(0, 0);           // message type
+  b.setUint8(4, 32);          // bits-per-pixel
+  b.setUint8(5, 24);          // depth
+  b.setUint8(6, 0);           // big-endian flag
+  b.setUint8(7, 1);           // true-colour flag
+  b.setUint16(8,  255, false); // red-max
+  b.setUint16(10, 255, false); // green-max
+  b.setUint16(12, 255, false); // blue-max
+  b.setUint8(14, 16);          // red-shift
+  b.setUint8(15, 8);           // green-shift
+  b.setUint8(16, 0);           // blue-shift
   sendRaw(b.buffer);
 }
 
@@ -368,6 +382,7 @@ function sendSpecialKey(sym, down = true) {
   if (down) setTimeout(() => sendKeyMsg(sym, false), 80);
 }
 
+/* ─── Convenience actions ─── */
 function sendCAD() {
   if (rfbState !== 'active') { toast('Not connected', 'err'); return; }
   [0xffe3, 0xffe9, 0xffff].forEach(k => sendKeyMsg(k, true));
@@ -385,6 +400,7 @@ function sendClipboard() {
   toast('Clipboard sent to remote', 'good');
 }
 
+/* ─── Input binding ─── */
 const KEY_MAP = {
   Backspace:0xff08, Tab:0xff09, Enter:0xff0d, Escape:0xff1b, Delete:0xffff,
   Home:0xff50, End:0xff57, PageUp:0xff55, PageDown:0xff56, Insert:0xff63,
@@ -464,6 +480,7 @@ function onKU(e) {
   sendKeyMsg(s, false);
 }
 
+/* ─── UI helpers ─── */
 function setVStatus(state, text) {
   document.getElementById('vdot').className = state;
   document.getElementById('vstatus-text').textContent = text;
@@ -506,7 +523,7 @@ function toggleClip() {
 }
 
 function setQuality(_q) {
-  // ????????
+  // Quality hint — adjust update request rate in a real implementation
 }
 
 window.addEventListener('resize', () => { if (rfbState === 'active') fitScreen(); });
