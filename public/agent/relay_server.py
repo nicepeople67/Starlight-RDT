@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DeltaRDT Relay Server
+StarlightRDT Relay Server
 
 Two WebSocket paths:
   /register/<code>   — agent connects here, registers its session code
@@ -15,7 +15,7 @@ import asyncio, websockets, logging, argparse, json, time
 from websockets.exceptions import ConnectionClosed
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
-log = logging.getLogger('DeltaRDT-Relay')
+log = logging.getLogger('StarlightRDT-Relay')
 
 AGENT_SESSIONS: dict = {}
 SESSION_TTL = 7 * 24 * 3600
@@ -55,7 +55,7 @@ async def handle_viewer(websocket, code: str):
     session = AGENT_SESSIONS.get(code)
     if not session or session.get('ws') is None:
         try:
-            await websocket.send(json.dumps({'error': 'No agent found for this code. Make sure DeltaRDT is running on the host PC.'}))
+            await websocket.send(json.dumps({'error': 'No agent found for this code. Make sure StarlightRDT is running on the host PC.'}))
         except Exception:
             pass
         await websocket.close(1008, 'Agent not found')
@@ -132,7 +132,7 @@ async def router(websocket):
 
 
 async def main_async(host: str, port: int):
-    log.info(f'DeltaRDT Relay starting on {host}:{port}')
+    log.info(f'StarlightRDT Relay starting on {host}:{port}')
     log.info('  Agent registers at  : ws://host/register/<CODE>')
     log.info('  Browser connects at : ws://host/connect/<CODE>')
     log.info('  Health check        : http://host/api/status')
@@ -151,7 +151,7 @@ async def main_async(host: str, port: int):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='DeltaRDT Relay Server')
+    parser = argparse.ArgumentParser(description='StarlightRDT Relay Server')
     parser.add_argument('--host', default='0.0.0.0')
     parser.add_argument('--port', default=8765, type=int)
     args = parser.parse_args()

@@ -1,122 +1,122 @@
 /* ═══════════════════════════════════════
-   DeltaRDT — Remote Viewer Styles
+   StarlightRDT — Remote Viewer Styles
    ═══════════════════════════════════════ */
 
-   #p-remote { padding-top: 60px; }
+#p-remote { padding-top: 60px; }
 
-   #viewer-shell {
-     display: grid;
-     grid-template-columns: 300px 1fr;
-     grid-template-rows: 52px 1fr;
-     height: calc(100vh - 60px);
-     grid-template-areas: "vbar vbar" "vsidebar vmain";
-   }
-   
-   /* ─── viewer top bar ─── */
-   #vbar {
-     grid-area: vbar;
-     display: flex; align-items: center; gap: 14px;
-     padding: 0 18px;
-     background: var(--ink2);
-     border-bottom: 1px solid var(--steel);
-     flex-shrink: 0;
-   }
-   .vbar-logo { font-family: var(--head); font-weight: 900; font-size: 16px; color: var(--white); display: flex; align-items: center; gap: 7px; }
-   .vbar-logo span { color: var(--cyan); }
-   .vbar-sep  { width: 1px; height: 20px; background: var(--steel); }
-   .vbar-info { font-family: var(--mono); font-size: 11px; color: var(--dim); }
-   
-   #vpill { margin-left: auto; display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; color: var(--mute); padding: 4px 11px; border: 1px solid var(--steel); border-radius: 20px; background: var(--ink3); }
-   #vdot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); transition: background var(--tr); }
-   #vdot.conn { background: var(--green); box-shadow: 0 0 6px var(--green); }
-   #vdot.ing  { background: var(--amber); animation: blink 1s infinite; }
-   #vdot.err  { background: var(--red); }
-   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
-   
-   /* ─── sidebar ─── */
-   #vsidebar {
-     grid-area: vsidebar;
-     background: var(--ink2);
-     border-right: 1px solid var(--steel);
-     display: flex; flex-direction: column; overflow: hidden;
-   }
-   .vs-sec { padding: 14px 16px 8px; font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; border-bottom: 1px solid var(--steel); }
-   #vconn-panel { padding: 14px; }
-   .vf { margin-bottom: 10px; }
-   .vf label { display: block; font-family: var(--mono); font-size: 10px; color: var(--mute); margin-bottom: 4px; }
-   .vf input { width: 100%; background: var(--ink3); border: 1px solid var(--steel); border-radius: 6px; padding: 8px 10px; font-family: var(--mono); font-size: 12px; color: var(--white); outline: none; transition: border-color var(--tr); }
-   .vf input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,229,255,.1); }
-   .vf input::placeholder { color: var(--dim); }
-   
-   #vbtn-connect { width: 100%; padding: 10px; background: linear-gradient(135deg,var(--cyan),var(--cyan2)); border: none; border-radius: 7px; font-family: var(--body); font-weight: 700; font-size: 13px; color: var(--ink); cursor: pointer; transition: all .2s; margin-top: 2px; }
-   #vbtn-connect:hover { opacity: .88; transform: translateY(-1px); }
-   #vbtn-connect:disabled { opacity: .4; cursor: not-allowed; transform: none; }
-   
-   .recent-list { flex: 1; overflow-y: auto; padding: 8px; }
-   .recent-list::-webkit-scrollbar { width: 3px; }
-   .recent-list::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 2px; }
-   
-   .rec-item { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 7px; cursor: pointer; transition: background var(--tr); border: 1px solid transparent; }
-   .rec-item:hover { background: var(--ink3); border-color: var(--steel); }
-   .rec-icon { width: 30px; height: 30px; background: var(--ink3); border: 1px solid var(--steel); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
-   .rec-meta { flex: 1; min-width: 0; }
-   .rec-name { font-size: 12px; font-weight: 600; color: var(--fog); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-   .rec-addr { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 1px; }
-   
-   .vs-toolbar { padding: 10px 14px; border-top: 1px solid var(--steel); display: flex; gap: 7px; }
-   .vs-tool { flex: 1; padding: 7px; background: var(--ink3); border: 1px solid var(--steel); border-radius: 6px; font-family: var(--mono); font-size: 10px; color: var(--mute); cursor: pointer; text-align: center; transition: all var(--tr); }
-   .vs-tool:hover { background: var(--ink4); color: var(--light); border-color: var(--dim); }
-   
-   /* ─── main viewer area ─── */
-   #vmain {
-     grid-area: vmain;
-     display: flex; flex-direction: column;
-     background: var(--ink); overflow: hidden;
-   }
-   #vtoolbar { display: flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--ink2); border-bottom: 1px solid var(--steel); flex-shrink: 0; flex-wrap: wrap; }
-   .vt-sep { width: 1px; height: 15px; background: var(--steel); }
-   .vt-btn { padding: 5px 10px; background: transparent; border: 1px solid var(--steel); border-radius: 6px; font-family: var(--mono); font-size: 11px; color: var(--mute); cursor: pointer; transition: all var(--tr); display: flex; align-items: center; gap: 5px; }
-   .vt-btn:hover { background: var(--ink3); color: var(--light); border-color: var(--dim); }
-   .vt-btn.danger:hover { background: rgba(255,56,96,.1); color: var(--red); border-color: var(--red); }
-   #vquality { background: var(--ink3); border: 1px solid var(--steel); border-radius: 6px; padding: 5px 8px; font-family: var(--mono); font-size: 11px; color: var(--mute); cursor: pointer; outline: none; }
-   .vt-space { flex: 1; }
-   #vfps, #vlatency { font-family: var(--mono); font-size: 10px; color: var(--dim); padding: 4px 8px; background: var(--ink3); border: 1px solid var(--steel); border-radius: 5px; }
-   
-   /* ─── canvas wrap ─── */
-   #vcanvas-wrap {
-     flex: 1; display: flex; align-items: center; justify-content: center;
-     overflow: auto; position: relative;
-     background:
-       radial-gradient(ellipse at 30% 20%, rgba(124,77,255,.05) 0%, transparent 60%),
-       radial-gradient(ellipse at 80% 80%, rgba(0,212,255,.04) 0%, transparent 60%),
-       var(--ink);
-   }
-   #vcanvas-wrap::-webkit-scrollbar { width: 5px; height: 5px; }
-   #vcanvas-wrap::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 3px; }
-   
-   #remote-canvas { display: block; cursor: crosshair; box-shadow: 0 0 0 1px var(--steel), 0 20px 80px rgba(0,0,0,.7); border-radius: 2px; image-rendering: pixelated; max-width: 100%; max-height: 100%; }
-   
-   /* ─── splash ─── */
-   #vsplash { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; }
-   #vsplash::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(var(--steel) 1px,transparent 1px),linear-gradient(90deg,var(--steel) 1px,transparent 1px); background-size: 44px 44px; opacity: .18; }
-   .splash-icon { width: 68px; height: 68px; border: 1px solid var(--steel); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 30px; background: var(--ink2); color: var(--dim); animation: float 4s ease-in-out infinite; position: relative; }
-   @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-   .splash-t { font-size: 15px; font-weight: 600; color: var(--mute); position: relative; }
-   .splash-s { font-family: var(--mono); font-size: 11px; color: var(--dim); position: relative; }
-   
-   /* ─── loading overlay ─── */
-   #vloading { position: absolute; inset: 0; background: rgba(13,15,20,.93); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50; }
-   #vloading.vis { opacity: 1; pointer-events: all; }
-   .spinner { width: 34px; height: 34px; border: 2px solid var(--steel); border-top-color: var(--cyan); border-radius: 50%; animation: spin .8s linear infinite; }
-   @keyframes spin { to { transform: rotate(360deg); } }
-   .load-msg { font-family: var(--mono); font-size: 12px; color: var(--mute); }
-   
-   /* ─── clipboard panel ─── */
-   #vclip { position: absolute; right: 14px; top: 60px; width: 270px; background: var(--ink3); border: 1px solid var(--steel); border-radius: 10px; padding: 14px; z-index: 60; display: none; box-shadow: 0 16px 48px rgba(0,0,0,.5); }
-   #vclip.open { display: block; }
-   #vclip label { font-family: var(--mono); font-size: 10px; color: var(--mute); display: block; margin-bottom: 6px; }
-   #vclip-text { width: 100%; height: 76px; background: var(--ink4); border: 1px solid var(--steel); border-radius: 6px; padding: 8px; font-family: var(--mono); font-size: 11px; color: var(--light); resize: none; outline: none; }
-   #vclip-text:focus { border-color: var(--cyan); }
-   .vclip-btns { display: flex; gap: 7px; margin-top: 8px; }
-   .vclip-btns button { flex: 1; padding: 7px; background: var(--ink4); border: 1px solid var(--steel); border-radius: 5px; font-family: var(--mono); font-size: 10px; color: var(--mute); cursor: pointer; transition: all var(--tr); }
-   .vclip-btns button:hover { background: var(--steel); color: var(--white); }
+#viewer-shell {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: 52px 1fr;
+  height: calc(100vh - 60px);
+  grid-template-areas: "vbar vbar" "vsidebar vmain";
+}
+
+/* ─── viewer top bar ─── */
+#vbar {
+  grid-area: vbar;
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 18px;
+  background: var(--ink2);
+  border-bottom: 1px solid var(--steel);
+  flex-shrink: 0;
+}
+.vbar-logo { font-family: var(--head); font-weight: 900; font-size: 16px; color: var(--white); display: flex; align-items: center; gap: 7px; }
+.vbar-logo span { color: var(--cyan); }
+.vbar-sep  { width: 1px; height: 20px; background: var(--steel); }
+.vbar-info { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+
+#vpill { margin-left: auto; display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; color: var(--mute); padding: 4px 11px; border: 1px solid var(--steel); border-radius: 20px; background: var(--ink3); }
+#vdot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); transition: background var(--tr); }
+#vdot.conn { background: var(--green); box-shadow: 0 0 6px var(--green); }
+#vdot.ing  { background: var(--amber); animation: blink 1s infinite; }
+#vdot.err  { background: var(--red); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+/* ─── sidebar ─── */
+#vsidebar {
+  grid-area: vsidebar;
+  background: var(--ink2);
+  border-right: 1px solid var(--steel);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.vs-sec { padding: 14px 16px 8px; font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; border-bottom: 1px solid var(--steel); }
+#vconn-panel { padding: 14px; }
+.vf { margin-bottom: 10px; }
+.vf label { display: block; font-family: var(--mono); font-size: 10px; color: var(--mute); margin-bottom: 4px; }
+.vf input { width: 100%; background: var(--ink3); border: 1px solid var(--steel); border-radius: 6px; padding: 8px 10px; font-family: var(--mono); font-size: 12px; color: var(--white); outline: none; transition: border-color var(--tr); }
+.vf input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,229,255,.1); }
+.vf input::placeholder { color: var(--dim); }
+
+#vbtn-connect { width: 100%; padding: 10px; background: linear-gradient(135deg,var(--cyan),var(--cyan2)); border: none; border-radius: 7px; font-family: var(--body); font-weight: 700; font-size: 13px; color: var(--ink); cursor: pointer; transition: all .2s; margin-top: 2px; }
+#vbtn-connect:hover { opacity: .88; transform: translateY(-1px); }
+#vbtn-connect:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+.recent-list { flex: 1; overflow-y: auto; padding: 8px; }
+.recent-list::-webkit-scrollbar { width: 3px; }
+.recent-list::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 2px; }
+
+.rec-item { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 7px; cursor: pointer; transition: background var(--tr); border: 1px solid transparent; }
+.rec-item:hover { background: var(--ink3); border-color: var(--steel); }
+.rec-icon { width: 30px; height: 30px; background: var(--ink3); border: 1px solid var(--steel); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.rec-meta { flex: 1; min-width: 0; }
+.rec-name { font-size: 12px; font-weight: 600; color: var(--fog); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec-addr { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 1px; }
+
+.vs-toolbar { padding: 10px 14px; border-top: 1px solid var(--steel); display: flex; gap: 7px; }
+.vs-tool { flex: 1; padding: 7px; background: var(--ink3); border: 1px solid var(--steel); border-radius: 6px; font-family: var(--mono); font-size: 10px; color: var(--mute); cursor: pointer; text-align: center; transition: all var(--tr); }
+.vs-tool:hover { background: var(--ink4); color: var(--light); border-color: var(--dim); }
+
+/* ─── main viewer area ─── */
+#vmain {
+  grid-area: vmain;
+  display: flex; flex-direction: column;
+  background: var(--ink); overflow: hidden;
+}
+#vtoolbar { display: flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--ink2); border-bottom: 1px solid var(--steel); flex-shrink: 0; flex-wrap: wrap; }
+.vt-sep { width: 1px; height: 15px; background: var(--steel); }
+.vt-btn { padding: 5px 10px; background: transparent; border: 1px solid var(--steel); border-radius: 6px; font-family: var(--mono); font-size: 11px; color: var(--mute); cursor: pointer; transition: all var(--tr); display: flex; align-items: center; gap: 5px; }
+.vt-btn:hover { background: var(--ink3); color: var(--light); border-color: var(--dim); }
+.vt-btn.danger:hover { background: rgba(255,56,96,.1); color: var(--red); border-color: var(--red); }
+#vquality { background: var(--ink3); border: 1px solid var(--steel); border-radius: 6px; padding: 5px 8px; font-family: var(--mono); font-size: 11px; color: var(--mute); cursor: pointer; outline: none; }
+.vt-space { flex: 1; }
+#vfps, #vlatency { font-family: var(--mono); font-size: 10px; color: var(--dim); padding: 4px 8px; background: var(--ink3); border: 1px solid var(--steel); border-radius: 5px; }
+
+/* ─── canvas wrap ─── */
+#vcanvas-wrap {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  overflow: auto; position: relative;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(124,77,255,.05) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(0,212,255,.04) 0%, transparent 60%),
+    var(--ink);
+}
+#vcanvas-wrap::-webkit-scrollbar { width: 5px; height: 5px; }
+#vcanvas-wrap::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 3px; }
+
+#remote-canvas { display: block; cursor: crosshair; box-shadow: 0 0 0 1px var(--steel), 0 20px 80px rgba(0,0,0,.7); border-radius: 2px; image-rendering: pixelated; max-width: 100%; max-height: 100%; }
+
+/* ─── splash ─── */
+#vsplash { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; }
+#vsplash::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(var(--steel) 1px,transparent 1px),linear-gradient(90deg,var(--steel) 1px,transparent 1px); background-size: 44px 44px; opacity: .18; }
+.splash-icon { width: 68px; height: 68px; border: 1px solid var(--steel); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 30px; background: var(--ink2); color: var(--dim); animation: float 4s ease-in-out infinite; position: relative; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.splash-t { font-size: 15px; font-weight: 600; color: var(--mute); position: relative; }
+.splash-s { font-family: var(--mono); font-size: 11px; color: var(--dim); position: relative; }
+
+/* ─── loading overlay ─── */
+#vloading { position: absolute; inset: 0; background: rgba(13,15,20,.93); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50; }
+#vloading.vis { opacity: 1; pointer-events: all; }
+.spinner { width: 34px; height: 34px; border: 2px solid var(--steel); border-top-color: var(--cyan); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.load-msg { font-family: var(--mono); font-size: 12px; color: var(--mute); }
+
+/* ─── clipboard panel ─── */
+#vclip { position: absolute; right: 14px; top: 60px; width: 270px; background: var(--ink3); border: 1px solid var(--steel); border-radius: 10px; padding: 14px; z-index: 60; display: none; box-shadow: 0 16px 48px rgba(0,0,0,.5); }
+#vclip.open { display: block; }
+#vclip label { font-family: var(--mono); font-size: 10px; color: var(--mute); display: block; margin-bottom: 6px; }
+#vclip-text { width: 100%; height: 76px; background: var(--ink4); border: 1px solid var(--steel); border-radius: 6px; padding: 8px; font-family: var(--mono); font-size: 11px; color: var(--light); resize: none; outline: none; }
+#vclip-text:focus { border-color: var(--cyan); }
+.vclip-btns { display: flex; gap: 7px; margin-top: 8px; }
+.vclip-btns button { flex: 1; padding: 7px; background: var(--ink4); border: 1px solid var(--steel); border-radius: 5px; font-family: var(--mono); font-size: 10px; color: var(--mute); cursor: pointer; transition: all var(--tr); }
+.vclip-btns button:hover { background: var(--steel); color: var(--white); }

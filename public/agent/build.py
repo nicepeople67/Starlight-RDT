@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-DeltaRDT build script — run this on the target OS to produce the installer.
+StarlightRDT build script — run this on the target OS to produce the installer.
 
-  Windows : produces  dist/deltardt-setup.exe  (via PyInstaller + Inno Setup)
-            and       dist/deltardt-portable.zip
-  macOS   : produces  dist/DeltaRDT.dmg        (via PyInstaller + create-dmg)
-  Linux   : produces  dist/deltardt.deb         (via PyInstaller + dpkg-deb)
+  Windows : produces  dist/starlight-rdt-setup.exe  (via PyInstaller + Inno Setup)
+            and       dist/starlight-rdt-portable.zip
+  macOS   : produces  dist/StarlightRDT.dmg        (via PyInstaller + create-dmg)
+  Linux   : produces  dist/starlight-rdt.deb         (via PyInstaller + dpkg-deb)
 
 Usage:
   pip install -r requirements.txt
@@ -52,7 +52,7 @@ def pyinstaller_base(extra_args=None):
     cmd = [
         sys.executable, '-m', 'PyInstaller',
         '--onefile',
-        '--name', 'DeltaRDT',
+        '--name', 'StarlightRDT',
         '--distpath', DIST,
         '--workpath', HERE / 'build',
         '--specpath', HERE / 'build',
@@ -85,15 +85,15 @@ def build_windows():
     check_pyinstaller()
     pyinstaller_base()
 
-    exe = DIST / 'DeltaRDT.exe'
+    exe = DIST / 'StarlightRDT.exe'
     if not exe.exists():
-        print('ERROR: PyInstaller did not produce DeltaRDT.exe')
+        print('ERROR: PyInstaller did not produce StarlightRDT.exe')
         sys.exit(1)
 
-    portable_zip = DIST / 'deltardt-portable.zip'
+    portable_zip = DIST / 'starlight-rdt-portable.zip'
     with zipfile.ZipFile(portable_zip, 'w', zipfile.ZIP_DEFLATED) as z:
-        z.write(exe, 'DeltaRDT.exe')
-        readme = 'Run DeltaRDT.exe — no installation needed.\n'
+        z.write(exe, 'StarlightRDT.exe')
+        readme = 'Run StarlightRDT.exe — no installation needed.\n'
         z.writestr('README.txt', readme)
     print(f'Portable zip: {portable_zip}')
 
@@ -101,16 +101,16 @@ def build_windows():
     if inno:
         iss = _write_inno_script(exe)
         run([inno, iss])
-        setup_out = DIST / 'deltardt-setup.exe'
+        setup_out = DIST / 'starlight-rdt-setup.exe'
         print(f'Installer: {setup_out}')
     else:
         print('Inno Setup not found — skipping installer (portable zip only)')
         print('Install from: https://jrsoftware.org/isdl.php')
-        shutil.copy(exe, DIST / 'deltardt-setup.exe')
-        print('Copied exe as deltardt-setup.exe (not a true installer)')
+        shutil.copy(exe, DIST / 'starlight-rdt-setup.exe')
+        print('Copied exe as starlight-rdt-setup.exe (not a true installer)')
 
     print('\nWindows build complete:')
-    for f in DIST.glob('deltardt*'):
+    for f in DIST.glob('starlight-rdt*'):
         print(f'  {f.name}  ({f.stat().st_size // 1024} KB)')
 
 
@@ -119,13 +119,13 @@ def _write_inno_script(exe: Path) -> Path:
     iss_path.parent.mkdir(exist_ok=True)
     iss_path.write_text(f"""
 [Setup]
-AppName=DeltaRDT
+AppName=StarlightRDT
 AppVersion={VERSION}
-AppPublisher=DeltaRDT
-DefaultDirName={{autopf}}\\DeltaRDT
-DefaultGroupName=DeltaRDT
+AppPublisher=StarlightRDT
+DefaultDirName={{autopf}}\\StarlightRDT
+DefaultGroupName=StarlightRDT
 OutputDir={DIST}
-OutputBaseFilename=deltardt-setup
+OutputBaseFilename=starlight-rdt-setup
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -134,12 +134,12 @@ WizardStyle=modern
 Source: "{exe}"; DestDir: "{{app}}"; Flags: ignoreversion
 
 [Icons]
-Name: "{{group}}\\DeltaRDT"; Filename: "{{app}}\\DeltaRDT.exe"
-Name: "{{group}}\\Uninstall DeltaRDT"; Filename: "{{uninstallexe}}"
-Name: "{{commonstartup}}\\DeltaRDT"; Filename: "{{app}}\\DeltaRDT.exe"
+Name: "{{group}}\\StarlightRDT"; Filename: "{{app}}\\StarlightRDT.exe"
+Name: "{{group}}\\Uninstall StarlightRDT"; Filename: "{{uninstallexe}}"
+Name: "{{commonstartup}}\\StarlightRDT"; Filename: "{{app}}\\StarlightRDT.exe"
 
 [Run]
-Filename: "{{app}}\\DeltaRDT.exe"; Description: "Launch DeltaRDT"; Flags: nowait postinstall skipifsilent
+Filename: "{{app}}\\StarlightRDT.exe"; Description: "Launch StarlightRDT"; Flags: nowait postinstall skipifsilent
 """)
     return iss_path
 
@@ -149,29 +149,29 @@ def build_macos():
     check_pyinstaller()
     pyinstaller_base()
 
-    app = DIST / 'DeltaRDT.app'
+    app = DIST / 'StarlightRDT.app'
     if not app.exists():
-        print('ERROR: PyInstaller did not produce DeltaRDT.app')
+        print('ERROR: PyInstaller did not produce StarlightRDT.app')
         sys.exit(1)
 
-    dmg = DIST / 'DeltaRDT.dmg'
+    dmg = DIST / 'StarlightRDT.dmg'
     create_dmg = shutil.which('create-dmg')
     if create_dmg:
         run([
             create_dmg,
-            '--volname', 'DeltaRDT',
+            '--volname', 'StarlightRDT',
             '--window-size', '540', '380',
             '--icon-size', '128',
-            '--icon', 'DeltaRDT.app', '140', '180',
-            '--hide-extension', 'DeltaRDT.app',
+            '--icon', 'StarlightRDT.app', '140', '180',
+            '--hide-extension', 'StarlightRDT.app',
             '--app-drop-link', '400', '180',
             dmg, str(DIST),
         ])
     else:
         print('create-dmg not found — building plain DMG via hdiutil')
         tmp = tempfile.mkdtemp()
-        shutil.copytree(app, Path(tmp) / 'DeltaRDT.app', dirs_exist_ok=True)
-        run(['hdiutil', 'create', '-volname', 'DeltaRDT', '-srcfolder', tmp,
+        shutil.copytree(app, Path(tmp) / 'StarlightRDT.app', dirs_exist_ok=True)
+        run(['hdiutil', 'create', '-volname', 'StarlightRDT', '-srcfolder', tmp,
              '-ov', '-format', 'UDZO', dmg])
         shutil.rmtree(tmp)
         print('Install create-dmg for a nicer DMG: brew install create-dmg')
@@ -184,60 +184,60 @@ def build_linux():
     check_pyinstaller()
     pyinstaller_base(['--strip'])
 
-    binary = DIST / 'DeltaRDT'
+    binary = DIST / 'StarlightRDT'
     if not binary.exists():
-        print('ERROR: PyInstaller did not produce DeltaRDT binary')
+        print('ERROR: PyInstaller did not produce StarlightRDT binary')
         sys.exit(1)
 
     pkg = HERE / 'build' / 'deb'
     for d in ['usr/bin', 'usr/share/applications', 'usr/share/pixmaps',
-              f'usr/share/doc/deltardt', 'DEBIAN']:
+              f'usr/share/doc/starlight-rdt', 'DEBIAN']:
         (pkg / d).mkdir(parents=True, exist_ok=True)
 
-    shutil.copy(binary, pkg / 'usr/bin/deltardt')
-    (pkg / 'usr/bin/deltardt').chmod(0o755)
+    shutil.copy(binary, pkg / 'usr/bin/starlight-rdt')
+    (pkg / 'usr/bin/starlight-rdt').chmod(0o755)
 
-    (pkg / 'usr/share/applications/deltardt.desktop').write_text(
+    (pkg / 'usr/share/applications/starlight-rdt.desktop').write_text(
         '[Desktop Entry]\n'
-        'Name=DeltaRDT\n'
+        'Name=StarlightRDT\n'
         'Comment=Remote Desktop Agent\n'
-        'Exec=deltardt\n'
-        'Icon=deltardt\n'
+        'Exec=starlight-rdt\n'
+        'Icon=starlight-rdt\n'
         'Type=Application\n'
         'Categories=Network;RemoteAccess;\n'
         'StartupNotify=false\n'
     )
 
     if ICON_LIN.exists():
-        shutil.copy(ICON_LIN, pkg / 'usr/share/pixmaps/deltardt.png')
+        shutil.copy(ICON_LIN, pkg / 'usr/share/pixmaps/starlight-rdt.png')
 
     binary_size = binary.stat().st_size // 1024
     (pkg / 'DEBIAN/control').write_text(
-        f'Package: deltardt\n'
+        f'Package: starlight-rdt\n'
         f'Version: {VERSION}\n'
         f'Section: net\n'
         f'Priority: optional\n'
         f'Architecture: amd64\n'
         f'Installed-Size: {binary_size}\n'
-        f'Maintainer: DeltaRDT <support@deltardt.app>\n'
-        f'Description: DeltaRDT Remote Desktop Agent\n'
+        f'Maintainer: StarlightRDT <support@starlight-rdt.app>\n'
+        f'Description: StarlightRDT Remote Desktop Agent\n'
         f' Browser-based remote desktop — share your screen with one code.\n'
     )
 
     (pkg / 'DEBIAN/postinst').write_text(
         '#!/bin/sh\n'
-        'chmod +x /usr/bin/deltardt\n'
-        'echo "DeltaRDT installed. Run: deltardt"\n'
+        'chmod +x /usr/bin/starlight-rdt\n'
+        'echo "StarlightRDT installed. Run: starlight-rdt"\n'
     )
     (pkg / 'DEBIAN/postinst').chmod(0o755)
 
-    deb = DIST / 'deltardt.deb'
+    deb = DIST / 'starlight-rdt.deb'
     run(['dpkg-deb', '--build', '--root-owner-group', str(pkg), str(deb)])
     print(f'\nLinux build complete: {deb}')
 
 
 if __name__ == '__main__':
-    print(f'DeltaRDT v{VERSION} — building for {PLAT}')
+    print(f'StarlightRDT v{VERSION} — building for {PLAT}')
     DIST.mkdir(exist_ok=True)
     if PLAT == 'Windows':
         build_windows()

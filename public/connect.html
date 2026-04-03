@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Remote Desktop — DeltaRDT</title>
+  <title>Remote Desktop — StarlightRDT</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;700;900&family=Barlow+Condensed:wght@700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
@@ -15,7 +15,7 @@
 <div id="viewer-shell">
 
   <div id="vbar">
-    <div class="vbar-logo"><span>Delta</span>RDT</div>
+    <div class="vbar-logo">Starlight <span>RDT</span></div>
     <div class="vbar-sep"></div>
     <div class="vbar-info" id="vbar-info">RFB 3.8 · WebSocket relay</div>
     <a href="index.html" class="vt-btn" style="margin-left:12px;text-decoration:none">← Back to site</a>
@@ -30,8 +30,8 @@
     <div class="vs-sec">Connect</div>
     <div id="vconn-panel">
       <div class="vf">
-        <label>Relay URL</label>
-        <input type="text" id="vi-relay" value="ws://localhost:8765" placeholder="ws://your-relay-server:8765">
+        <label>Relay URL <span style="color:var(--dim);font-size:9px;letter-spacing:0;text-transform:none">(run relay_server.py on a public server)</span></label>
+        <input type="text" id="vi-relay" value="ws://localhost:8765" placeholder="ws://your-server-ip:8765">
       </div>
       <div class="vf">
         <label>Session code</label>
@@ -145,7 +145,7 @@
       const inp = document.getElementById('vi-code');
       if (inp) inp.value = code;
       const account = getAccount();
-      if (account) document.title = account.label + ' — DeltaRDT';
+      if (account) document.title = account.label + ' — StarlightRDT';
       renderConnectRecent();
     });
   })();

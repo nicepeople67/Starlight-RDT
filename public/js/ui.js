@@ -1,3 +1,9 @@
+/**
+ * StarlightRDT — UI Utilities
+ * Handles: page routing, tabs, FAQ accordion, modal, copy buttons,
+ *          scroll animations, toast notifications, nav highlight
+ */
+
 function triggerDownload(filename, label) {
   const url = 'downloads/' + filename;
   fetch(url, { method: 'HEAD' })
@@ -31,7 +37,8 @@ function scrollToSection(id) {
   const el = document.querySelector(id);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
-a
+
+/* ─── Setup guide tabs ─── */
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('on'));
@@ -44,6 +51,7 @@ function switchTab(name, btn) {
   });
 }
 
+/* ─── FAQ accordion ─── */
 function toggleFaq(btn) {
   const item = btn.closest('.faq-item');
   const open = item.classList.contains('open');
@@ -51,6 +59,7 @@ function toggleFaq(btn) {
   if (!open) item.classList.add('open');
 }
 
+/* ─── Download modal ─── */
 function openDlModal() {
   document.getElementById('dl-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -63,6 +72,7 @@ function closeDlModal(e) {
   }
 }
 
+/* ─── Copy code blocks ─── */
 function copyCode(btn) {
   const block = btn.closest('.code-block');
   const text = Array.from(block.childNodes)
@@ -80,6 +90,7 @@ function copyCode(btn) {
   });
 }
 
+/* ─── Toast ─── */
 function toast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -88,6 +99,7 @@ function toast(msg, type = '') {
   t._t = setTimeout(() => t.classList.remove('vis'), 4000);
 }
 
+/* ─── Scroll animations ─── */
 const revealObserver = new IntersectionObserver(entries => {
   entries.forEach(e => {
     if (e.isIntersecting) {
@@ -101,6 +113,7 @@ const revealObserver = new IntersectionObserver(entries => {
 
 document.querySelectorAll('.reveal, .stagger').forEach(el => revealObserver.observe(el));
 
+/* ─── Nav highlight on scroll ─── */
 window.addEventListener('scroll', () => {
   const y = window.scrollY + 80;
   document.querySelectorAll('[id]').forEach(s => {

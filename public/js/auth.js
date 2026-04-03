@@ -1,4 +1,4 @@
-const ACCOUNT_KEY = 'deltardt_account';
+const ACCOUNT_KEY = 'starlight-rdt_account';
 const CODE_TTL    = 7 * 24 * 60 * 60 * 1000;
 
 function _generateCode() {
@@ -93,15 +93,15 @@ function getSavedSessions() {
 }
 
 function setAuthed(code) {
-  sessionStorage.setItem('deltardt_auth', code);
+  sessionStorage.setItem('starlight-rdt_auth', code);
 }
 
 function getAuthed() {
-  return sessionStorage.getItem('deltardt_auth') || null;
+  return sessionStorage.getItem('starlight-rdt_auth') || null;
 }
 
 function clearAuthed() {
-  sessionStorage.removeItem('deltardt_auth');
+  sessionStorage.removeItem('starlight-rdt_auth');
 }
 
 function normaliseCode(raw) {

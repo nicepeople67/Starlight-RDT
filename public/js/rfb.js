@@ -1,5 +1,5 @@
 /**
- * DeltaRDT — RFB 3.8 Client
+ * StarlightRDT — RFB 3.8 Client
  * Full VNC protocol over WebSocket.
  * Encodings: Raw, RRE, Hextile, DesktopSize
  */

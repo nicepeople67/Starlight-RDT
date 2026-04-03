@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DeltaRDT Agent
+StarlightRDT Agent
 - Runs a local VNC server on 127.0.0.1:5900
 - Connects to the relay and registers the session code
 - When a viewer connects, bridges VNC traffic through the relay WebSocket
@@ -12,12 +12,12 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
-log = logging.getLogger('DeltaRDT')
+log = logging.getLogger('StarlightRDT')
 
 RELAY_URL   = os.environ.get('DELTARDT_RELAY', 'ws://localhost:8765')
 VNC_PORT    = int(os.environ.get('DELTARDT_PORT', '5900'))
 CODE_TTL    = 7 * 24 * 3600
-CONFIG_DIR  = Path.home() / '.deltardt'
+CONFIG_DIR  = Path.home() / '.starlight-rdt'
 CONFIG_FILE = CONFIG_DIR / 'config.json'
 PLATFORM    = platform.system()
 
@@ -198,7 +198,7 @@ class RFBClient(threading.Thread):
         self._send(struct.pack('!I', 0))
         self._recv(1)
         w, h = self.server.width, self.server.height
-        name = b'DeltaRDT'
+        name = b'StarlightRDT'
         self._send(struct.pack('!HH', w, h) + PIX_FMT + struct.pack('!I', len(name)) + name)
         log.info(f'RFB handshake done with {self.addr}  ({w}x{h})')
         return True
@@ -522,13 +522,13 @@ class TrayApp:
                 pystray.MenuItem(self._status_label(), None, enabled=False),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem('Copy code to clipboard', lambda i, _: self._copy_code()),
-                pystray.MenuItem('Quit DeltaRDT', lambda i, _: self._quit()),
+                pystray.MenuItem('Quit StarlightRDT', lambda i, _: self._quit()),
             )
 
-        icon = pystray.Icon('DeltaRDT', img, f'DeltaRDT  |  {code}', make_menu())
+        icon = pystray.Icon('StarlightRDT', img, f'StarlightRDT  |  {code}', make_menu())
         log.info(f'Session code: {code}  ({expiry})')
         print(f'\n  ╔══════════════════════════════╗')
-        print(f'  ║  DeltaRDT is running         ║')
+        print(f'  ║  StarlightRDT is running         ║')
         print(f'  ║  Session code: {code:<14} ║')
         print(f'  ║  {expiry:<28} ║')
         print(f'  ╚══════════════════════════════╝\n')
@@ -548,7 +548,7 @@ class TrayApp:
 
         class App(rumps.App):
             def __init__(inner):
-                super().__init__('DeltaRDT', title='⬡ DeltaRDT')
+                super().__init__('StarlightRDT', title='⬡ StarlightRDT')
                 inner.menu = [
                     rumps.MenuItem(f'Code: {code}'),
                     rumps.MenuItem(expiry),
@@ -561,14 +561,14 @@ class TrayApp:
             def do_copy(inner, _):
                 import subprocess
                 subprocess.run(['pbcopy'], input=cfg.get_code().encode())
-                rumps.notification('DeltaRDT', 'Code copied', cfg.get_code())
+                rumps.notification('StarlightRDT', 'Code copied', cfg.get_code())
 
             @rumps.clicked('Quit')
             def do_quit(inner, _):
                 rumps.quit_application()
 
         log.info(f'Session code: {code}  ({expiry})')
-        print(f'\n  DeltaRDT running in menu bar — code: {code}\n')
+        print(f'\n  StarlightRDT running in menu bar — code: {code}\n')
         App().run()
 
     def _linux(self):
@@ -586,7 +586,7 @@ class TrayApp:
         expiry = self.config.expiry_str()
 
         ind = AppIndicator3.Indicator.new(
-            'deltardt', 'network-transmit',
+            'starlight-rdt', 'network-transmit',
             AppIndicator3.IndicatorCategory.APPLICATION_STATUS,
         )
         ind.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
@@ -603,7 +603,7 @@ class TrayApp:
         copy_item.connect('activate', lambda _: self._copy_code())
         menu.append(copy_item)
 
-        quit_item = Gtk.MenuItem(label='Quit DeltaRDT')
+        quit_item = Gtk.MenuItem(label='Quit StarlightRDT')
         quit_item.connect('activate', lambda _: self._quit())
         menu.append(quit_item)
 
@@ -611,7 +611,7 @@ class TrayApp:
         ind.set_menu(menu)
 
         log.info(f'Session code: {code}  ({expiry})')
-        print(f'\n  DeltaRDT running in tray — code: {code}\n')
+        print(f'\n  StarlightRDT running in tray — code: {code}\n')
         Gtk.main()
 
     def _cli(self):
@@ -619,7 +619,7 @@ class TrayApp:
         expiry = self.config.expiry_str()
         print()
         print('  ╔══════════════════════════════════╗')
-        print('  ║       DeltaRDT Agent Running     ║')
+        print('  ║       StarlightRDT Agent Running     ║')
         print(f'  ║   Session code : {code:<16} ║')
         print(f'  ║   {expiry:<32} ║')
         print(f'  ║   VNC port     : {self.vnc.port:<16} ║')
@@ -635,7 +635,7 @@ class TrayApp:
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(description='DeltaRDT Agent')
+    parser = argparse.ArgumentParser(description='StarlightRDT Agent')
     parser.add_argument('--relay',    default=RELAY_URL,  help='Relay WebSocket URL')
     parser.add_argument('--port',     default=VNC_PORT,   type=int, help='Local VNC port')
     parser.add_argument('--no-tray',  action='store_true', help='CLI mode, no tray icon')
