@@ -5,7 +5,10 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "setup.sh",
+      "setup.bat",
+      "agent/**"
     ]
   }
 }
