@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RemoteDesk</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --panel: #111118;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #0088ff;
+    --danger: #ff3355;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+    --glow: rgba(0,255,136,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .logo-icon {
+    width: 28px;
+    height: 20px;
+    border: 2px solid var(--accent);
+    border-radius: 3px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-icon::after {
+    content: '';
+    width: 8px;
+    height: 2px;
+    background: var(--accent);
+    position: absolute;
+    bottom: -6px;
+  }
+
+  /* connect form */
+  #connect-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 420px;
+  }
+
+  #code-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 12px;
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 170px;
+  }
+
+  #code-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--glow);
+  }
+
+  #code-input::placeholder {
+    color: var(--muted);
+    letter-spacing: 4px;
+    font-size: 14px;
+  }
+
+  #host-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    outline: none;
+    width: 160px;
+    transition: border-color 0.2s;
+  }
+  #host-input:focus { border-color: var(--accent2); color: var(--text); }
+
+  #connect-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 9px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    flex-shrink: 0;
+  }
+  #connect-btn:hover { opacity: 0.85; }
+  #connect-btn:active { transform: scale(0.97); }
+  #connect-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #disconnect-btn {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: none;
+    transition: background 0.15s;
+  }
+  #disconnect-btn:hover { background: rgba(255,51,85,0.1); }
+
+  /* status pill */
+  #status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+  }
+  .dot.connected { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .dot.connecting { background: #ffaa00; animation: pulse 1s infinite; }
+  .dot.error { background: var(--danger); }
+
+  /* stats bar */
+  #stats-bar {
+    display: none;
+    align-items: center;
+    gap: 16px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .stat { display: flex; align-items: center; gap: 5px; }
+  .stat-val { color: var(--accent); }
+
+  /* ── MAIN AREA ── */
+  #main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* landing screen */
+  #landing {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 40px;
+    background: radial-gradient(ellipse at 50% 40%, rgba(0,255,136,0.04) 0%, transparent 60%);
+  }
+
+  .landing-title {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.1;
+  }
+
+  .landing-title span { color: var(--accent); }
+
+  .landing-sub {
+    color: var(--muted);
+    font-size: 15px;
+    text-align: center;
+    max-width: 420px;
+    line-height: 1.6;
+  }
+
+  .landing-steps {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .step {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    width: 170px;
+    text-align: center;
+  }
+
+  .step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .step-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .step-text code {
+    color: var(--text);
+    background: var(--bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+  }
+
+  /* install box */
+  .install-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    max-width: 480px;
+    width: 100%;
+  }
+
+  .install-box .cmd {
+    color: var(--accent);
+    display: block;
+    margin-top: 4px;
+    font-size: 13px;
+  }
+
+  /* ── REMOTE VIEW ── */
+  #remote-view {
+    flex: 1;
+    display: none;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+    cursor: none;
+  }
+
+  #remote-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* custom cursor overlay */
+  #cursor-dot {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: width 0.1s, height 0.1s;
+    z-index: 10;
+  }
+
+  #cursor-dot.clicking {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+  }
+
+  /* quality overlay */
+  #quality-overlay {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+    z-index: 20;
+  }
+
+  .q-btn {
+    background: rgba(0,0,0,0.7);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 4px 9px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .q-btn:hover, .q-btn.active { color: var(--accent); border-color: var(--accent); }
+
+  /* clipboard bar */
+  #clipboard-bar {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    background: rgba(0,0,0,0.85);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    z-index: 30;
+    animation: fadeout 2s forwards;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @keyframes fadeout { 0%,70% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* mobile warning */
+  @media (max-width: 600px) {
+    .landing-steps { flex-direction: column; align-items: center; }
+    #stats-bar { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="logo">
+    <div class="logo-icon"></div>
+    REMOTEDESK
+  </div>
+
+  <div id="connect-form">
+    <input id="code-input" type="text" maxlength="5" placeholder="00000" autocomplete="off" spellcheck="false">
+    <input id="host-input" type="text" value="localhost:9009" title="WebSocket host:port of the remote machine">
+    <button id="connect-btn" onclick="connect()">CONNECT</button>
+    <button id="disconnect-btn" onclick="disconnect()">DISCONNECT</button>
+  </div>
+
+  <div id="stats-bar">
+    <div class="stat">FPS <span class="stat-val" id="stat-fps">--</span></div>
+    <div class="stat">LATENCY <span class="stat-val" id="stat-ping">--</span>ms</div>
+    <div class="stat">RES <span class="stat-val" id="stat-res">--</span></div>
+  </div>
+
+  <div id="status-pill">
+    <div class="dot" id="status-dot"></div>
+    <span id="status-text">DISCONNECTED</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- Landing -->
+  <div id="landing">
+    <div>
+      <div class="landing-title">Remote Desktop<br><span>in your browser</span></div>
+    </div>
+    <p class="landing-sub">
+      Connect to any machine running the host script. Enter the 5-digit code shown in the terminal.
+    </p>
+
+    <div class="landing-steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-text">Install the host script dependencies with <code>pip install</code></div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-text">Run <code>python remote_host.py</code> on the target machine</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-text">Enter the 5-digit code shown in the terminal above</div>
+      </div>
+    </div>
+
+    <div class="install-box">
+      <span>Install dependencies:</span>
+      <code class="cmd">pip install pillow pynput mss websockets</code>
+    </div>
+  </div>
+
+  <!-- Remote view -->
+  <div id="remote-view">
+    <canvas id="remote-canvas"></canvas>
+    <div id="cursor-dot"></div>
+    <div id="clipboard-bar">📋 Clipboard synced</div>
+    <div id="quality-overlay">
+      <button class="q-btn" onclick="setQuality('low')">LOW</button>
+      <button class="q-btn active" onclick="setQuality('mid')">MID</button>
+      <button class="q-btn" onclick="setQuality('high')">HIGH</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ────────────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────────────
+let ws = null;
+let connected = false;
+let remoteWidth = 1920, remoteHeight = 1080;
+let frameCount = 0, lastFpsTime = Date.now();
+let pingStart = 0, lastPing = 0;
+let qualityMode = 'mid';
+
+const canvas = document.getElementById('remote-canvas');
+const ctx = canvas.getContext('2d');
+const cursorDot = document.getElementById('cursor-dot');
+const remoteView = document.getElementById('remote-view');
+const landing = document.getElementById('landing');
+
+// ────────────────────────────────────────────────────
+// STATUS
+// ────────────────────────────────────────────────────
+function setStatus(state, text) {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  dot.className = 'dot ' + state;
+  txt.textContent = text;
+}
+
+// ────────────────────────────────────────────────────
+// CONNECT / DISCONNECT
+// ────────────────────────────────────────────────────
+function connect() {
+  const code = document.getElementById('code-input').value.trim();
+  const host = document.getElementById('host-input').value.trim();
+
+  if (code.length !== 5 || !/^\d{5}$/.test(code)) {
+    shake(document.getElementById('code-input'));
+    return;
+  }
+
+  if (ws) ws.close();
+
+  setStatus('connecting', 'CONNECTING...');
+  document.getElementById('connect-btn').disabled = true;
+
+  const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+  const uri = `${protocol}://${host}`;
+
+  ws = new WebSocket(uri);
+  ws.binaryType = 'arraybuffer';
+
+  ws.onopen = () => {
+    // send auth
+    ws.send(JSON.stringify({ type: 'auth', code }));
+  };
+
+  ws.onmessage = async (e) => {
+    const msg = JSON.parse(e.data);
+
+    if (msg.type === 'auth_ok') {
+      connected = true;
+      setStatus('connected', 'CONNECTED');
+      showRemoteView();
+      startPing();
+      startFpsCounter();
+      document.getElementById('disconnect-btn').style.display = 'inline-flex';
+      document.getElementById('stats-bar').style.display = 'flex';
+      document.getElementById('connect-btn').disabled = false;
+    }
+
+    else if (msg.type === 'error') {
+      setStatus('error', 'ERROR: ' + (msg.message || 'Unknown'));
+      disconnect();
+    }
+
+    else if (msg.type === 'frame') {
+      await drawFrame(msg);
+    }
+
+    else if (msg.type === 'pong') {
+      lastPing = Date.now() - pingStart;
+      document.getElementById('stat-ping').textContent = lastPing;
+    }
+  };
+
+  ws.onerror = () => {
+    setStatus('error', 'CONNECTION FAILED');
+    document.getElementById('connect-btn').disabled = false;
+  };
+
+  ws.onclose = () => {
+    if (connected) setStatus('error', 'DISCONNECTED');
+    connected = false;
+    showLanding();
+    document.getElementById('connect-btn').disabled = false;
+    document.getElementById('disconnect-btn').style.display = 'none';
+    document.getElementById('stats-bar').style.display = 'none';
+  };
+}
+
+function disconnect() {
+  if (ws) { ws.close(); ws = null; }
+  connected = false;
+  setStatus('', 'DISCONNECTED');
+  showLanding();
+  document.getElementById('disconnect-btn').style.display = 'none';
+  document.getElementById('stats-bar').style.display = 'none';
+}
+
+// ────────────────────────────────────────────────────
+// VIEWS
+// ────────────────────────────────────────────────────
+function showRemoteView() {
+  landing.style.display = 'none';
+  remoteView.style.display = 'flex';
+  remoteView.focus();
+  attachInputHandlers();
+}
+
+function showLanding() {
+  remoteView.style.display = 'none';
+  landing.style.display = 'flex';
+  detachInputHandlers();
+}
+
+// ────────────────────────────────────────────────────
+// FRAME RENDERING
+// ────────────────────────────────────────────────────
+async function drawFrame(msg) {
+  const img = new Image();
+  await new Promise((res, rej) => {
+    img.onload = res;
+    img.onerror = rej;
+    img.src = 'data:image/jpeg;base64,' + msg.data;
+  });
+
+  remoteWidth = msg.width || img.width;
+  remoteHeight = msg.height || img.height;
+
+  // size canvas to match remote resolution
+  if (canvas.width !== remoteWidth || canvas.height !== remoteHeight) {
+    canvas.width = remoteWidth;
+    canvas.height = remoteHeight;
+    document.getElementById('stat-res').textContent = `${remoteWidth}×${remoteHeight}`;
+  }
+
+  ctx.drawImage(img, 0, 0);
+  frameCount++;
+}
+
+// ────────────────────────────────────────────────────
+// INPUT FORWARDING
+// ────────────────────────────────────────────────────
+let inputAttached = false;
+
+function attachInputHandlers() {
+  if (inputAttached) return;
+  inputAttached = true;
+  remoteView.addEventListener('mousemove', onMouseMove);
+  remoteView.addEventListener('mousedown', onMouseDown);
+  remoteView.addEventListener('mouseup', onMouseUp);
+  remoteView.addEventListener('wheel', onWheel, { passive: false });
+  remoteView.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('keyup', onKeyUp);
+}
+
+function detachInputHandlers() {
+  inputAttached = false;
+  remoteView.removeEventListener('mousemove', onMouseMove);
+  remoteView.removeEventListener('mousedown', onMouseDown);
+  remoteView.removeEventListener('mouseup', onMouseUp);
+  remoteView.removeEventListener('wheel', onWheel);
+  document.removeEventListener('keydown', onKeyDown);
+  document.removeEventListener('keyup', onKeyUp);
+}
+
+function canvasToRemote(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = remoteWidth / rect.width;
+  const scaleY = remoteHeight / rect.height;
+  return {
+    x: Math.round((clientX - rect.left) * scaleX),
+    y: Math.round((clientY - rect.top) * scaleY)
+  };
+}
+
+function send(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(obj));
+  }
+}
+
+function onMouseMove(e) {
+  // update cursor overlay
+  cursorDot.style.left = e.clientX - remoteView.getBoundingClientRect().left + 'px';
+  cursorDot.style.top = e.clientY - remoteView.getBoundingClientRect().top + 'px';
+
+  const { x, y } = canvasToRemote(e.clientX, e.clientY);
+  send({ type: 'mousemove', x, y });
+}
+
+function onMouseDown(e) {
+  cursorDot.classList.add('clicking');
+  const { x, y } = canvasToRemote(e.clientX, e.clientY);
+  send({ type: 'mousedown', x, y, button: e.button });
+}
+
+function onMouseUp(e) {
+  cursorDot.classList.remove('clicking');
+  const { x, y } = canvasToRemote(e.clientX, e.clientY);
+  send({ type: 'mouseup', x, y, button: e.button });
+}
+
+function onWheel(e) {
+  e.preventDefault();
+  send({ type: 'wheel', deltaX: e.deltaX, deltaY: e.deltaY });
+}
+
+// Keys to block from browser handling when remote is active
+const BLOCKED_KEYS = new Set([
+  'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
+  'Tab','Escape'
+]);
+
+function onKeyDown(e) {
+  if (!connected) return;
+  if (BLOCKED_KEYS.has(e.key)) e.preventDefault();
+  if (e.ctrlKey && ['r','l','t','w','n'].includes(e.key)) e.preventDefault();
+  send({
+    type: 'keydown',
+    key: e.key,
+    code: e.code,
+    ctrlKey: e.ctrlKey,
+    altKey: e.altKey,
+    shiftKey: e.shiftKey,
+    metaKey: e.metaKey
+  });
+}
+
+function onKeyUp(e) {
+  if (!connected) return;
+  send({ type: 'keyup', key: e.key, code: e.code });
+}
+
+// ────────────────────────────────────────────────────
+// PING / FPS
+// ────────────────────────────────────────────────────
+let pingInterval = null, fpsInterval = null;
+
+function startPing() {
+  pingInterval = setInterval(() => {
+    if (!connected) return;
+    pingStart = Date.now();
+    send({ type: 'ping' });
+  }, 2000);
+}
+
+function startFpsCounter() {
+  fpsInterval = setInterval(() => {
+    const now = Date.now();
+    const elapsed = (now - lastFpsTime) / 1000;
+    const fps = Math.round(frameCount / elapsed);
+    document.getElementById('stat-fps').textContent = fps;
+    frameCount = 0;
+    lastFpsTime = now;
+  }, 1000);
+}
+
+// ────────────────────────────────────────────────────
+// QUALITY
+// ────────────────────────────────────────────────────
+function setQuality(mode) {
+  qualityMode = mode;
+  document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  // Instruct host to change quality (optional, host can react)
+  send({ type: 'quality', mode });
+}
+
+// ────────────────────────────────────────────────────
+// UTILS
+// ────────────────────────────────────────────────────
+function shake(el) {
+  el.style.animation = 'none';
+  el.style.borderColor = 'var(--danger)';
+  el.getBoundingClientRect();
+  el.style.transition = 'transform 0.05s';
+  let i = 0;
+  const interval = setInterval(() => {
+    el.style.transform = i % 2 === 0 ? 'translateX(5px)' : 'translateX(-5px)';
+    if (++i > 6) {
+      clearInterval(interval);
+      el.style.transform = '';
+      el.style.borderColor = '';
+    }
+  }, 50);
+}
+
+// code input: digits only
+document.getElementById('code-input').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '').slice(0, 5);
+});
+
+document.getElementById('code-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') connect();
+});
+
+// clipboard paste into code
+document.addEventListener('paste', function(e) {
+  const txt = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 5);
+  if (txt.length === 5 && !connected) {
+    document.getElementById('code-input').value = txt;
+  }
+});
+
+// pointer lock for better mouse capture (optional)
+remoteView.addEventListener('click', () => {
+  if (connected && document.pointerLockElement !== remoteView) {
+    // remoteView.requestPointerLock(); // uncomment for pointer lock mode
+  }
+});
+</script>
+</body>
+</html>
