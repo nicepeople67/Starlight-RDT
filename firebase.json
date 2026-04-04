@@ -1,13 +1,11 @@
 {
-  "hosting": [
-    {
-      "target": "main",
-      "public": "public",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ]
-    }
-  ]
+  "hosting": {
+    "site": "starlightrdt",
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
 }
