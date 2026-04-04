@@ -14,8 +14,8 @@ from typing import Optional, Tuple
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 log = logging.getLogger('StarlightRDT')
 
-RELAY_URL   = os.environ.get('DELTARDT_RELAY', 'ws://localhost:8765')
-VNC_PORT    = int(os.environ.get('DELTARDT_PORT', '5900'))
+RELAY_URL   = os.environ.get('STARLIGHT_RELAY', 'ws://relay.starlight-rdt.app:8765')
+VNC_PORT    = int(os.environ.get('STARLIGHT_PORT', '5900'))
 CODE_TTL    = 7 * 24 * 3600
 CONFIG_DIR  = Path.home() / '.starlight-rdt'
 CONFIG_FILE = CONFIG_DIR / 'config.json'

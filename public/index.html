@@ -48,7 +48,7 @@
       Anyone with a code connects instantly from any browser — no port forwarding, no IT department.
     </p>
     <div class="hero-btns">
-      <button class="btn-p" onclick="openDlModal()">↓ Download Agent</button>
+      <a href="https://github.com/nicepeople67/Starlight-RDT/archive/refs/heads/main.zip" class="btn-p">↓ Download Agent</a>
       <a href="login.html" class="btn-s">🖥 Connect to a PC</a>
     </div>
     <div class="os-badges">
@@ -148,28 +148,27 @@
     <p class="s-intro">One small agent. No admin rights required on Windows. Installs in 30 seconds.</p>
 
     <div class="dl-grid stagger">
-      <div class="dl-card feat" onclick="openDlModal()">
+      <div class="dl-card feat" onclick="window.location='https://github.com/nicepeople67/Starlight-RDT/archive/refs/heads/main.zip'">
         <span class="dl-os-icon">🪟</span>
         <div class="dl-name">Windows</div>
-        <div class="dl-desc">Windows 10 and 11. Runs as a background service. Optional auto-start with your PC.</div>
-        <div class="dl-ver">v1.0.0 · 4.2 MB</div>
-        <button class="dl-btn" onclick="event.stopPropagation();triggerDownload('starlight-rdt-setup.exe','Windows Installer')">Installer .exe <span class="dl-sz">↓ 4.2 MB</span></button>
-        <button class="dl-btn" onclick="event.stopPropagation();triggerDownload('starlight-rdt-portable.zip','Windows Portable')" style="font-size:12px">Portable .zip <span class="dl-sz">↓ 3.1 MB</span></button>
+        <div class="dl-desc">Windows 10 and 11. Download the zip, extract, and double-click setup.bat. Python auto-installs.</div>
+        <div class="dl-ver">Requires Python 3.8+</div>
+        <a class="dl-btn" href="https://github.com/nicepeople67/Starlight-RDT/archive/refs/heads/main.zip" onclick="event.stopPropagation()">↓ Download zip + setup.bat <span class="dl-sz">↓ GitHub</span></a>
+        <a class="dl-btn" href="https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe" onclick="event.stopPropagation()" style="font-size:12px">↓ Get Python 3.12 first <span class="dl-sz">↓ python.org</span></a>
       </div>
-      <div class="dl-card" onclick="openDlModal()">
+      <div class="dl-card" onclick="window.location='https://github.com/nicepeople67/Starlight-RDT/archive/refs/heads/main.zip'">
         <span class="dl-os-icon"></span>
         <div class="dl-name">macOS</div>
-        <div class="dl-desc">Universal binary — Intel and Apple Silicon. Requires macOS 12 Monterey or later.</div>
-        <div class="dl-ver">v1.0.0 · 6.8 MB</div>
-        <button class="dl-btn" onclick="event.stopPropagation();triggerDownload('StarlightRDT.dmg','macOS App')">StarlightRDT.dmg <span class="dl-sz">↓ 6.8 MB</span></button>
+        <div class="dl-desc">macOS 10.15+. Download zip, extract, and run setup.sh in Terminal. Installs everything automatically.</div>
+        <div class="dl-ver">Requires Python 3.8+</div>
+        <a class="dl-btn" href="https://github.com/nicepeople67/Starlight-RDT/archive/refs/heads/main.zip" onclick="event.stopPropagation()">↓ Download zip + setup.sh <span class="dl-sz">↓ GitHub</span></a>
       </div>
-      <div class="dl-card" onclick="openDlModal()">
+      <div class="dl-card" onclick="window.location='https://github.com/nicepeople67/Starlight-RDT/archive/refs/heads/main.zip'">
         <span class="dl-os-icon">🐧</span>
         <div class="dl-name">Linux</div>
-        <div class="dl-desc">Debian/Ubuntu .deb package or a standalone Python script. X11 and Wayland support.</div>
-        <div class="dl-ver">v1.0.0 · 2.1 MB</div>
-        <button class="dl-btn" onclick="event.stopPropagation();triggerDownload('starlight-rdt.deb','Linux .deb')">deb package <span class="dl-sz">↓ 2.1 MB</span></button>
-        <a class="dl-btn" href="agent/vnc_server.py" download onclick="event.stopPropagation()" style="font-size:12px">Python script <span class="dl-sz">↓ 48 KB</span></a>
+        <div class="dl-desc">Ubuntu, Debian, Fedora, Arch. Python usually already installed. Run setup.sh — one command.</div>
+        <div class="dl-ver">Requires Python 3.8+</div>
+        <a class="dl-btn" href="https://github.com/nicepeople67/Starlight-RDT/archive/refs/heads/main.zip" onclick="event.stopPropagation()">↓ Download zip + setup.sh <span class="dl-sz">↓ GitHub</span></a>
       </div>
     </div>
     <div style="margin-top:24px;text-align:center">
@@ -190,36 +189,33 @@
         <button class="tab-btn on"  onclick="switchTab('win',this)">🪟 Windows</button>
         <button class="tab-btn"     onclick="switchTab('mac',this)"> macOS</button>
         <button class="tab-btn"     onclick="switchTab('lnx',this)">🐧 Linux</button>
-        <button class="tab-btn"     onclick="switchTab('cnx',this)">🌐 Connecting</button>
-        <button class="tab-btn"     onclick="switchTab('slf',this)">⚙️ Self-host</button>
+        <button class="tab-btn"     onclick="switchTab('cnx',this)">🌐 Connecting (viewer)</button>
       </div>
 
       <!-- WINDOWS -->
       <div class="tab-content on" id="tc-win">
         <div class="setup-steps">
           <div class="ss"><div class="ss-num">1</div><div class="ss-body">
-            <h4>Download and run the installer</h4>
-            <p>Download <strong>starlight-rdt-setup.exe</strong> and double-click it. Windows SmartScreen may warn about an unknown publisher — click <strong>"More info" → "Run anyway"</strong>. This is normal for unsigned software.</p>
-            <div class="info-box warn"><span class="ib-icon">⚠️</span><p class="ib-text">Can't install? Use the <strong>portable .zip</strong> instead — extract and double-click <code>starlight-rdt.exe</code>, no installation needed, no admin rights.</p></div>
+            <h4>Download Python first (if you don't have it)</h4>
+            <p>Starlight RDT needs Python to run. If you already have it, skip this step.</p>
+            <a class="btn-p" href="https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex;text-decoration:none">↓ Download Python 3.12 for Windows</a>
+            <div class="info-box warn"><span class="ib-icon">⚠️</span><p class="ib-text">During Python install, <strong>check the box that says "Add Python to PATH"</strong> on the first screen. This is important.</p></div>
           </div></div>
           <div class="ss"><div class="ss-num">2</div><div class="ss-body">
-            <h4>Allow through Windows Firewall</h4>
-            <p>A firewall prompt appears on first run. Click <strong>Allow access</strong> for both Private and Public networks. This lets the agent reach the relay server outbound — no inbound ports are opened.</p>
-            <div class="info-box"><span class="ib-icon">💡</span><p class="ib-text">If the prompt doesn't appear, go to <strong>Windows Security → Firewall → Allow an app</strong> and add Starlight RDT manually.</p></div>
+            <h4>Download Starlight RDT</h4>
+            <p>Click the button below to download the agent. Then extract the zip file anywhere you like.</p>
+            <a class="btn-p" href="https://github.com/nicepeople67/Starlight-RDT/archive/refs/heads/main.zip" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex;text-decoration:none">↓ Download Starlight RDT (zip)</a>
           </div></div>
           <div class="ss"><div class="ss-num">3</div><div class="ss-body">
-            <h4>Your session code appears</h4>
-            <p>A tray icon appears in the system tray (bottom-right). The Starlight RDT window shows your <strong>session code</strong> — e.g. <code style="font-family:var(--mono);background:rgba(0,229,255,.1);padding:2px 7px;border-radius:4px;font-size:13px">AB3-X92</code>. Share this with whoever needs to connect.</p>
-            <div class="info-box ok"><span class="ib-icon">✅</span><p class="ib-text">Codes refresh every 24 hours. Right-click the tray icon → <strong>New Code</strong> to generate a fresh one anytime.</p></div>
+            <h4>Run setup.bat — one double-click</h4>
+            <p>Inside the extracted folder, double-click <strong>setup.bat</strong>. It automatically installs everything and starts the agent.</p>
+            <div class="info-box warn"><span class="ib-icon">⚠️</span><p class="ib-text">Windows SmartScreen may warn "unrecognized app". Click <strong>More info → Run anyway</strong>. This is normal for new software.</p></div>
+            <div class="info-box ok"><span class="ib-icon">✅</span><p class="ib-text">A black window opens and shows your <strong>session code</strong>. Keep this window open while sharing. Close it to stop.</p></div>
           </div></div>
           <div class="ss"><div class="ss-num">4</div><div class="ss-body">
-            <h4>Optional: start with Windows</h4>
-            <p>Right-click the tray icon → <strong>Start with Windows</strong> to always have Starlight RDT running in the background so you can connect remotely even after a reboot.</p>
-          </div></div>
-          <div class="ss"><div class="ss-num">5</div><div class="ss-body">
-            <h4>Share your code and connect</h4>
-            <p>On the Chromebook (or any browser), click <strong>Connect Now</strong> in the nav bar. Enter the session code and click Connect. You'll see the remote desktop in ~2 seconds.</p>
-            <a class="btn-p" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex" href="login.html">→ Open Connect page</a>
+            <h4>Share your session code</h4>
+            <p>The window shows a code like <code style="font-family:var(--mono);background:rgba(0,229,255,.1);padding:2px 7px;border-radius:4px">AB3X92DE</code>. Send this to whoever needs to connect. They open <strong>Connect Now</strong> above and type it in — no download needed on their side.</p>
+            <a class="btn-p" href="login.html" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex;text-decoration:none">→ Open Connect page</a>
           </div></div>
         </div>
       </div>
@@ -228,22 +224,28 @@
       <div class="tab-content" id="tc-mac">
         <div class="setup-steps">
           <div class="ss"><div class="ss-num">1</div><div class="ss-body">
-            <h4>Download and open the .dmg</h4>
-            <p>Download <strong>StarlightRDT.dmg</strong>, open it, and drag Starlight RDT into your <strong>Applications</strong> folder. Then launch it from Applications or Spotlight.</p>
-            <div class="info-box warn"><span class="ib-icon">⚠️</span><p class="ib-text">macOS may say the app is from an "unidentified developer". Go to <strong>System Settings → Privacy &amp; Security</strong> and click <strong>"Open Anyway"</strong>.</p></div>
+            <h4>Download Python first (if you don't have it)</h4>
+            <p>Open Terminal (Cmd+Space → type "Terminal") and run:</p>
+            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">python3 --version</span></div>
+            <p>If it says "command not found", install Python:</p>
+            <a class="btn-p" href="https://www.python.org/ftp/python/3.12.4/python-3.12.4-macos11.pkg" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex;text-decoration:none">↓ Download Python 3.12 for macOS</a>
           </div></div>
           <div class="ss"><div class="ss-num">2</div><div class="ss-body">
-            <h4>Grant Screen Recording permission</h4>
-            <p>On first launch macOS prompts for <strong>Screen Recording</strong> access. If you miss the prompt, go to <strong>System Settings → Privacy &amp; Security → Screen Recording</strong> and enable Starlight RDT.</p>
+            <h4>Download and extract Starlight RDT</h4>
+            <a class="btn-p" href="https://github.com/nicepeople67/Starlight-RDT/archive/refs/heads/main.zip" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex;text-decoration:none">↓ Download Starlight RDT (zip)</a>
+            <p style="margin-top:12px">Double-click the zip to extract it, then open Terminal and navigate to the folder:</p>
+            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">cd ~/Downloads/Starlight-RDT-main</span></div>
           </div></div>
           <div class="ss"><div class="ss-num">3</div><div class="ss-body">
-            <h4>Grant Accessibility permission</h4>
-            <p>To allow keyboard and mouse input from the remote side, also enable Starlight RDT under <strong>Privacy &amp; Security → Accessibility</strong>. Both permissions are needed for full control.</p>
+            <h4>Run setup.sh</h4>
+            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">bash setup.sh</span></div>
+            <p>This installs dependencies and starts the agent automatically.</p>
+            <div class="info-box warn"><span class="ib-icon">⚠️</span><p class="ib-text">macOS will ask for <strong>Screen Recording</strong> and <strong>Accessibility</strong> permissions. Grant both in <strong>System Settings → Privacy &amp; Security</strong>. Then re-run <code>bash setup.sh</code>.</p></div>
           </div></div>
           <div class="ss"><div class="ss-num">4</div><div class="ss-body">
-            <h4>Session code in the menu bar</h4>
-            <p>Starlight RDT appears in the menu bar (top-right). Click it to see your code. Share it and the viewer connects from <strong>Connect Now</strong>.</p>
-            <a class="btn-p" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex" href="login.html">→ Open Connect page</a>
+            <h4>Share your session code</h4>
+            <p>The terminal shows your code. Send it to whoever needs to connect — they open <strong>Connect Now</strong> and type it in.</p>
+            <a class="btn-p" href="login.html" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex;text-decoration:none">→ Open Connect page</a>
           </div></div>
         </div>
       </div>
@@ -252,78 +254,40 @@
       <div class="tab-content" id="tc-lnx">
         <div class="setup-steps">
           <div class="ss"><div class="ss-num">1</div><div class="ss-body">
-            <h4>Install Python dependencies</h4>
-            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">sudo apt update &amp;&amp; sudo apt install python3-pip</span><br><span class="kw">pip3 install mss pyautogui websockets Pillow</span></div>
-            <div class="info-box"><span class="ib-icon">💡</span><p class="ib-text">On Fedora/RHEL: <code>sudo dnf install python3-pip</code> · On Arch: <code>sudo pacman -S python-pip</code></p></div>
+            <h4>Download Starlight RDT</h4>
+            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">cd ~/Downloads</span><br><span class="kw">wget</span> https://github.com/nicepeople67/Starlight-RDT/archive/refs/heads/main.zip<br><span class="kw">unzip</span> main.zip<br><span class="kw">cd</span> Starlight-RDT-main</div>
           </div></div>
           <div class="ss"><div class="ss-num">2</div><div class="ss-body">
-            <h4>Download and run the agent</h4>
-            <p>Option A — .deb package (Ubuntu/Debian):</p>
-            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">sudo dpkg -i</span> starlight-rdt_1.0.0_amd64.deb<br><span class="kw">starlight-rdt</span></div>
-            <p style="margin-top:12px">Option B — Python script (any distro):</p>
-            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">python3</span> vnc_server.py</div>
+            <h4>Run setup.sh</h4>
+            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">bash setup.sh</span></div>
+            <p>Installs all dependencies and starts the agent. Your session code appears in the terminal.</p>
+            <div class="info-box"><span class="ib-icon">💡</span><p class="ib-text">Wayland users: if screen capture doesn't work, run <code>DISPLAY=:0 bash setup.sh</code> instead.</p></div>
           </div></div>
           <div class="ss"><div class="ss-num">3</div><div class="ss-body">
-            <h4>Wayland users — set DISPLAY</h4>
-            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">DISPLAY=:0</span> python3 vnc_server.py</div>
-            <div class="info-box warn"><span class="ib-icon">⚠️</span><p class="ib-text">Pure Wayland without XWayland may limit screen capture. Ubuntu 22+ has XWayland enabled by default.</p></div>
-          </div></div>
-          <div class="ss"><div class="ss-num">4</div><div class="ss-body">
-            <h4>Session code in terminal or GUI</h4>
-            <p>The agent prints your code to the terminal and opens a small GTK window. Share the code and connect from the browser.</p>
-            <a class="btn-p" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex" href="login.html">→ Open Connect page</a>
+            <h4>Share your session code</h4>
+            <p>Send the code to whoever needs to connect — they open <strong>Connect Now</strong> and type it in. No download needed on their side.</p>
+            <a class="btn-p" href="login.html" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex;text-decoration:none">→ Open Connect page</a>
           </div></div>
         </div>
       </div>
 
-      <!-- CONNECTING -->
+      <!-- CONNECTING (viewer side) -->
       <div class="tab-content" id="tc-cnx">
         <div class="setup-steps">
           <div class="ss"><div class="ss-num">1</div><div class="ss-body">
-            <h4>No download needed on the viewer side</h4>
-            <p>The <strong>Connect Now</strong> viewer runs entirely in your browser — on a Chromebook, phone, tablet, or another PC. Just open this site and click <strong>Connect Now</strong> in the nav.</p>
-            <a class="btn-p" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex" href="login.html">→ Open Connect page</a>
+            <h4>No download needed — just a browser</h4>
+            <p>If someone is sharing their screen with you, you don't need to install anything. Just click <strong>Connect Now</strong> on this site — works on Chromebook, phone, tablet, any browser.</p>
+            <a class="btn-p" href="login.html" style="margin-top:8px;font-size:13px;padding:10px 22px;display:inline-flex;text-decoration:none">→ Open Connect page</a>
           </div></div>
           <div class="ss"><div class="ss-num">2</div><div class="ss-body">
             <h4>Enter the session code</h4>
-            <p>Type the <strong>session code</strong> shown on the host PC. The format is 6 characters like <code style="font-family:var(--mono);background:rgba(0,229,255,.1);padding:2px 7px;border-radius:4px;font-size:13px">AB3X92</code>. Leave the relay URL as the default unless you're self-hosting.</p>
-            <div class="info-box"><span class="ib-icon">💡</span><p class="ib-text">The relay field defaults to <code>ws://localhost:8765</code> for local use. For remote access across networks, deploy <code>relay_server.py</code> on a public server and enter its address here.</p></div>
+            <p>Ask the person sharing their screen for their <strong>session code</strong>. Type it into the box on the Connect page and click <strong>Connect</strong>.</p>
+            <div class="info-box ok"><span class="ib-icon">✅</span><p class="ib-text">The code is 8 characters, letters and numbers. It looks like <code>AB3X92DE</code>. It's shown in the agent window on the host PC.</p></div>
           </div></div>
           <div class="ss"><div class="ss-num">3</div><div class="ss-body">
-            <h4>You're in — full keyboard &amp; mouse control</h4>
-            <p>The remote desktop appears in the browser. Click to move the mouse, type to send keystrokes. The toolbar gives you <strong>Ctrl+Alt+Del</strong>, clipboard sync, fit-to-screen, and fullscreen.</p>
-            <div class="info-box ok"><span class="ib-icon">✅</span><p class="ib-text">On Chromebook: press <strong>Ctrl+Shift+F</strong> to go fullscreen. All keyboard shortcuts are forwarded correctly to the remote PC.</p></div>
-          </div></div>
-          <div class="ss"><div class="ss-num">4</div><div class="ss-body">
-            <h4>Adjust quality for your connection speed</h4>
-            <p>Use the <strong>Quality</strong> dropdown in the viewer toolbar. <strong>Low</strong> works great on mobile data or slow hotel WiFi. <strong>Full</strong> is best on a fast home network.</p>
-          </div></div>
-        </div>
-      </div>
-
-      <!-- SELF-HOST -->
-      <div class="tab-content" id="tc-slf">
-        <div class="setup-steps">
-          <div class="ss"><div class="ss-num">1</div><div class="ss-body">
-            <h4>Why you need a relay for cross-network access</h4>
-            <p>Both the agent (host PC) and browser connect <strong>outbound</strong> to the relay. The relay sits in the middle and bridges them. This means neither side needs an open port or static IP.</p>
-            <div class="info-box"><span class="ib-icon">💡</span><p class="ib-text">For local network use (same WiFi) you can run the relay on any machine and use <code>ws://local-ip:8765</code>. For internet access, the relay must be on a machine with a public IP.</p></div>
-          </div></div>
-          <div class="ss"><div class="ss-num">2</div><div class="ss-body">
-            <h4>Deploy the relay on a public server</h4>
-            <p>Get a cheap VPS (Hetzner CX11, DigitalOcean Droplet, etc.), then:</p>
-            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">pip3 install websockets</span><br><span class="kw">python3</span> relay_server.py --host 0.0.0.0 --port <span class="st">8765</span></div>
-            <div class="info-box warn"><span class="ib-icon">⚠️</span><p class="ib-text">Open port 8765 in your firewall/security group. For HTTPS sites use nginx + SSL and port 443 so browsers allow <code>wss://</code> connections.</p></div>
-          </div></div>
-          <div class="ss"><div class="ss-num">3</div><div class="ss-body">
-            <h4>Start the agent pointing at your relay</h4>
-            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">copy</button><span class="kw">python3</span> agent.py --relay ws://<span class="st">YOUR_SERVER_IP</span>:8765</div>
-            <p>The agent registers its session code with your relay. The tray icon shows the code.</p>
-          </div></div>
-          <div class="ss"><div class="ss-num">4</div><div class="ss-body">
-            <h4>Connect from the browser</h4>
-            <p>Open <strong>connect.html</strong>, set the Relay URL to <code>ws://YOUR_SERVER_IP:8765</code>, enter the session code, and click Connect. Works from any network anywhere in the world.</p>
-            <div class="info-box ok"><span class="ib-icon">✅</span><p class="ib-text">The relay only bridges bytes — it never stores or inspects your screen data. You can audit <code>relay_server.py</code> — it's under 100 lines.</p></div>
+            <h4>You're connected — full control</h4>
+            <p>The remote desktop appears. Click to move the mouse, type normally. Use the toolbar for <strong>Ctrl+Alt+Del</strong>, clipboard, and fullscreen.</p>
+            <div class="info-box"><span class="ib-icon">💡</span><p class="ib-text">On Chromebook: press <strong>Ctrl+Shift+F</strong> to go fullscreen. Use the Quality dropdown in the toolbar if the connection is slow.</p></div>
           </div></div>
         </div>
       </div>
