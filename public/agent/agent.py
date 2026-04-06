@@ -14,7 +14,7 @@ from typing import Optional, Tuple
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 log = logging.getLogger('StarlightRDT')
 
-RELAY_URL   = os.environ.get('STARLIGHT_RELAY', 'ws://relay.starlight-rdt.app:8765')
+RELAY_URL   = os.environ.get('STARLIGHT_RELAY', 'wss://starlight-rdt-relay.YOUR-NAME.workers.dev')
 VNC_PORT    = int(os.environ.get('STARLIGHT_PORT', '5900'))
 CODE_TTL    = 7 * 24 * 3600
 CONFIG_DIR  = Path.home() / '.starlight-rdt'
@@ -359,55 +359,58 @@ class RelayConnector:
         log.info(f'Connecting to relay: {url}')
         self.on_status('connecting')
 
-        async with websockets.connect(
-            url,
+        # Support websockets v10/11 (connect) and v12/13 (connect with different kwargs)
+        connect_kwargs = dict(
             ping_interval=20,
             ping_timeout=30,
             max_size=16 * 1024 * 1024,
-        ) as ws:
+        )
+        try:
+            ws_connect = websockets.connect(url, **connect_kwargs)
+        except TypeError:
+            ws_connect = websockets.connect(url)
+
+        async with ws_connect as ws:
             self.on_status('connected')
-            log.info(f'Relay connected — session code: {self.code}')
+            log.info(f'Relay connected — code: {self.code}')
 
             async for raw_msg in ws:
-                if isinstance(raw_msg, str):
-                    try:
-                        msg = json.loads(raw_msg)
-                    except json.JSONDecodeError:
-                        continue
+                if not isinstance(raw_msg, str):
+                    continue
+                try:
+                    msg = json.loads(raw_msg)
+                except json.JSONDecodeError:
+                    continue
 
-                    if msg.get('status') == 'registered':
-                        log.info(f'Registration confirmed — code: {self.code}')
-
-                    elif msg.get('status') == 'viewer_connected':
-                        log.info('Viewer connected — bridging to VNC')
-                        self.on_status('viewer_connected')
-                        await self._bridge_vnc(ws)
-                        self.on_status('connected')
-                        log.info('Viewer disconnected — waiting for next viewer')
-
-                    elif 'error' in msg:
-                        log.error(f'Relay error: {msg["error"]}')
-
-                elif isinstance(raw_msg, bytes):
-                    # Raw binary during bridging (shouldn't happen here but handle it)
-                    pass
+                status = msg.get('status', '')
+                if status == 'registered':
+                    log.info(f'Registered — code: {self.code}')
+                elif status == 'viewer_connected':
+                    log.info('Viewer connected — opening VNC bridge')
+                    self.on_status('viewer_connected')
+                    await self._bridge_vnc(ws)
+                    self.on_status('connected')
+                    log.info('Viewer left — waiting for next viewer')
+                elif 'error' in msg:
+                    log.error(f'Relay: {msg["error"]}')
 
     async def _bridge_vnc(self, relay_ws):
-        """Open a TCP connection to local VNC and bridge bytes both ways."""
+        """Bridge the relay WebSocket directly to the local VNC TCP socket."""
         try:
             reader, writer = await asyncio.wait_for(
                 asyncio.open_connection('127.0.0.1', self.vnc_port),
                 timeout=5.0,
             )
         except Exception as e:
-            log.error(f'Cannot connect to local VNC on port {self.vnc_port}: {e}')
+            log.error(f'Cannot reach VNC on :{self.vnc_port} — {e}')
+            log.error('Make sure the agent started the VNC server successfully.')
             try:
-                await relay_ws.send(json.dumps({'error': 'VNC server not reachable'}))
+                await relay_ws.send(json.dumps({'error': 'VNC server not reachable on agent side'}))
             except Exception:
                 pass
             return
 
-        log.info(f'VNC bridge open on port {self.vnc_port}')
+        log.info(f'VNC bridge open :{self.vnc_port}')
 
         async def vnc_to_relay():
             try:
@@ -415,9 +418,9 @@ class RelayConnector:
                     data = await reader.read(65536)
                     if not data:
                         break
-                    await relay_ws.send(data)
-            except Exception:
-                pass
+                    await relay_ws.send(data)   # send raw bytes
+            except Exception as e:
+                log.debug(f'vnc_to_relay ended: {e}')
 
         async def relay_to_vnc():
             try:
@@ -426,24 +429,25 @@ class RelayConnector:
                         writer.write(msg)
                         await writer.drain()
                     elif isinstance(msg, str):
+                        # control JSON — only stop on viewer_disconnected
                         try:
                             ctrl = json.loads(msg)
                             if ctrl.get('status') == 'viewer_disconnected':
                                 break
                         except json.JSONDecodeError:
-                            pass
-            except Exception:
-                pass
+                            # not JSON — treat as raw text, unlikely but safe
+                            writer.write(msg.encode())
+                            await writer.drain()
+            except Exception as e:
+                log.debug(f'relay_to_vnc ended: {e}')
 
-        tasks = [
-            asyncio.create_task(vnc_to_relay()),
-            asyncio.create_task(relay_to_vnc()),
-        ]
-        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        t1 = asyncio.create_task(vnc_to_relay())
+        t2 = asyncio.create_task(relay_to_vnc())
+        done, pending = await asyncio.wait([t1, t2], return_when=asyncio.FIRST_COMPLETED)
         for t in pending:
             t.cancel()
-        writer.close()
         try:
+            writer.close()
             await writer.wait_closed()
         except Exception:
             pass

@@ -1,164 +1,177 @@
 #!/usr/bin/env python3
 """
-StarlightRDT Relay Server
+Starlight RDT — Relay Server
+Works with websockets 10.x, 11.x, 12.x, 13.x
 
-Two WebSocket paths:
-  /register/<code>   — agent connects here, registers its session code
-  /connect/<code>    — browser viewer connects here, gets bridged to agent
-
-HTTP paths (same port):
-  GET  /api/status          — server health check
-  GET  /api/sessions        — list active agent sessions
+  /register/<CODE>  — agent connects here
+  /connect/<CODE>   — browser viewer connects here, bridged to agent
+  /api/status       — JSON health check
 """
 
-import asyncio, websockets, logging, argparse, json, time
-from websockets.exceptions import ConnectionClosed
+import asyncio, json, logging, argparse, time
+from http import HTTPStatus
 
+log = logging.getLogger('Starlight-Relay')
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
-log = logging.getLogger('StarlightRDT-Relay')
 
-AGENT_SESSIONS: dict = {}
-SESSION_TTL = 7 * 24 * 3600
+SESSIONS: dict = {}   # code -> {'ws': websocket, 'ts': float}
 
 
-def _clean_sessions():
-    now = time.time()
-    dead = [k for k, v in list(AGENT_SESSIONS.items()) if now - v['registered_at'] > SESSION_TTL]
-    for k in dead:
-        del AGENT_SESSIONS[k]
-
-
-async def handle_agent(websocket, code: str):
-    _clean_sessions()
-    if code in AGENT_SESSIONS and AGENT_SESSIONS[code].get('ws') is not None:
-        await websocket.close(1008, 'Code already registered')
-        return
-
-    AGENT_SESSIONS[code] = {
-        'ws': websocket,
-        'registered_at': time.time(),
-    }
-    log.info(f'Agent registered: {code}')
-
+def _path(ws):
+    """Get path string regardless of websockets version."""
     try:
-        await websocket.send(json.dumps({'status': 'registered', 'code': code}))
-        await websocket.wait_closed()
-    except ConnectionClosed:
+        return ws.request.path          # v12+
+    except AttributeError:
         pass
-    finally:
-        if AGENT_SESSIONS.get(code, {}).get('ws') is websocket:
-            AGENT_SESSIONS.pop(code, None)
-        log.info(f'Agent disconnected: {code}')
-
-
-async def handle_viewer(websocket, code: str):
-    session = AGENT_SESSIONS.get(code)
-    if not session or session.get('ws') is None:
-        try:
-            await websocket.send(json.dumps({'error': 'No agent found for this code. Make sure StarlightRDT is running on the host PC.'}))
-        except Exception:
-            pass
-        await websocket.close(1008, 'Agent not found')
-        return
-
-    agent_ws = session['ws']
-    log.info(f'Viewer connected for {code} — bridging')
-
     try:
-        await agent_ws.send(json.dumps({'status': 'viewer_connected'}))
-    except ConnectionClosed:
-        try:
-            await websocket.send(json.dumps({'error': 'Agent disconnected just now. Try again.'}))
-        except Exception:
-            pass
-        await websocket.close()
-        return
-
-    async def agent_to_viewer():
-        try:
-            async for msg in agent_ws:
-                await websocket.send(msg)
-        except ConnectionClosed:
-            pass
-
-    async def viewer_to_agent():
-        try:
-            async for msg in websocket:
-                await agent_ws.send(msg)
-        except ConnectionClosed:
-            pass
-
-    tasks = [
-        asyncio.create_task(agent_to_viewer()),
-        asyncio.create_task(viewer_to_agent()),
-    ]
-    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-    for t in pending:
-        t.cancel()
-    log.info(f'Bridge closed for {code}')
+        return ws.path                  # v10/v11
+    except AttributeError:
+        return '/'
 
 
-async def handle_http(path, request_headers):
+async def process_request(connection, request):
+    """Handle plain HTTP requests (health check). Return None to allow WS upgrade."""
+    path = request.path
     if path == '/api/status':
-        _clean_sessions()
-        body = json.dumps({'status': 'ok', 'agents': len(AGENT_SESSIONS)}).encode()
-        return (200, [('Content-Type', 'application/json'), ('Access-Control-Allow-Origin', '*')], body)
-    if path == '/api/sessions':
-        _clean_sessions()
-        data = {k: {'registered_at': v['registered_at']} for k, v in AGENT_SESSIONS.items()}
-        body = json.dumps(data).encode()
-        return (200, [('Content-Type', 'application/json'), ('Access-Control-Allow-Origin', '*')], body)
+        body = json.dumps({'status': 'ok', 'sessions': len(SESSIONS)}).encode()
+        headers = [
+            ('Content-Type', 'application/json'),
+            ('Access-Control-Allow-Origin', '*'),
+            ('Content-Length', str(len(body))),
+        ]
+        return connection.respond(HTTPStatus.OK, body.decode())
     return None
 
 
-async def router(websocket):
-    try:
-        path = websocket.request.path
-    except AttributeError:
-        path = getattr(websocket, 'path', '/')
-
+async def router(ws):
+    path  = _path(ws)
     parts = [p for p in path.strip('/').split('/') if p]
 
     if len(parts) == 2 and parts[0] == 'register':
-        await handle_agent(websocket, parts[1].upper())
+        await on_agent(ws, parts[1].upper())
     elif len(parts) == 2 and parts[0] == 'connect':
-        await handle_viewer(websocket, parts[1].upper())
+        await on_viewer(ws, parts[1].upper())
+    elif path in ('/', ''):
+        await ws.send(json.dumps({'info': 'Starlight RDT relay', 'usage': '/register/<CODE> or /connect/<CODE>'}))
+        await ws.close()
     else:
+        await ws.send(json.dumps({'error': f'Unknown path: {path}'}))
+        await ws.close(1008, 'bad path')
+
+
+async def on_agent(ws, code: str):
+    _prune()
+    old = SESSIONS.get(code)
+    if old:
         try:
-            await websocket.send(json.dumps({'error': f'Unknown path: {path}. Use /register/<code> or /connect/<code>'}))
+            await old['ws'].close(1001, 'replaced')
         except Exception:
             pass
-        await websocket.close(1008, 'Bad path')
+
+    SESSIONS[code] = {'ws': ws, 'ts': time.time()}
+    log.info(f'Agent registered: {code}')
+
+    try:
+        await ws.send(json.dumps({'status': 'registered', 'code': code}))
+        await ws.wait_closed()
+    finally:
+        if SESSIONS.get(code, {}).get('ws') is ws:
+            SESSIONS.pop(code, None)
+        log.info(f'Agent gone: {code}')
 
 
-async def main_async(host: str, port: int):
-    log.info(f'StarlightRDT Relay starting on {host}:{port}')
-    log.info('  Agent registers at  : ws://host/register/<CODE>')
-    log.info('  Browser connects at : ws://host/connect/<CODE>')
-    log.info('  Health check        : http://host/api/status')
+async def on_viewer(ws, code: str):
+    sess = SESSIONS.get(code)
+    if not sess:
+        await ws.send(json.dumps({'error': 'Agent not found. Make sure Starlight RDT is running on the host PC and the code is correct.'}))
+        await ws.close(1008, 'not found')
+        return
 
-    async with websockets.serve(
-        router,
-        host,
-        port,
-        process_request=handle_http,
-        max_size=16 * 1024 * 1024,
-        ping_interval=20,
-        ping_timeout=30,
-    ):
-        log.info('Relay ready.')
-        await asyncio.Future()
+    agent = sess['ws']
+    log.info(f'Viewer joined: {code}')
+
+    try:
+        await agent.send(json.dumps({'status': 'viewer_connected'}))
+    except Exception:
+        await ws.send(json.dumps({'error': 'Agent just disconnected — try again.'}))
+        await ws.close()
+        return
+
+    async def a2v():
+        try:
+            async for msg in agent:
+                await ws.send(msg)
+        except Exception:
+            pass
+
+    async def v2a():
+        try:
+            async for msg in ws:
+                await agent.send(msg)
+        except Exception:
+            pass
+
+    t1 = asyncio.create_task(a2v())
+    t2 = asyncio.create_task(v2a())
+    done, pending = await asyncio.wait([t1, t2], return_when=asyncio.FIRST_COMPLETED)
+    for t in pending:
+        t.cancel()
+
+    try:
+        await agent.send(json.dumps({'status': 'viewer_disconnected'}))
+    except Exception:
+        pass
+
+    log.info(f'Viewer left: {code}')
+
+
+def _prune():
+    cutoff = time.time() - 7 * 86400
+    dead = [k for k, v in list(SESSIONS.items()) if v['ts'] < cutoff]
+    for k in dead:
+        SESSIONS.pop(k, None)
+
+
+async def main_async(host, port):
+    import websockets
+
+    log.info(f'Starlight RDT Relay  {host}:{port}')
+    log.info(f'  Agent  -> ws://{host}:{port}/register/<CODE>')
+    log.info(f'  Viewer -> ws://{host}:{port}/connect/<CODE>')
+    log.info(f'  Status -> http://{host}:{port}/api/status')
+
+    # process_request signature changed across versions — try both
+    try:
+        async with websockets.serve(
+            router, host, port,
+            process_request=process_request,
+            max_size=16 * 1024 * 1024,
+            ping_interval=20,
+            ping_timeout=30,
+        ):
+            log.info('Relay ready — press Ctrl+C to stop')
+            await asyncio.Future()
+    except TypeError:
+        # older websockets doesn't support this process_request signature
+        async with websockets.serve(
+            router, host, port,
+            max_size=16 * 1024 * 1024,
+            ping_interval=20,
+            ping_timeout=30,
+        ):
+            log.info('Relay ready — press Ctrl+C to stop')
+            await asyncio.Future()
 
 
 def main():
-    parser = argparse.ArgumentParser(description='StarlightRDT Relay Server')
-    parser.add_argument('--host', default='0.0.0.0')
-    parser.add_argument('--port', default=8765, type=int)
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser(description='Starlight RDT Relay')
+    ap.add_argument('--host', default='0.0.0.0')
+    ap.add_argument('--port', default=8765, type=int)
+    args = ap.parse_args()
     try:
         asyncio.run(main_async(args.host, args.port))
     except KeyboardInterrupt:
-        log.info('Relay stopped')
+        log.info('Stopped.')
 
 
 if __name__ == '__main__':
