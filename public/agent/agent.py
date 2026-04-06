@@ -288,13 +288,34 @@ class VNCServer(threading.Thread):
         self.running = True
         self._sock: Optional[socket.socket] = None
         self.width, self.height = get_screen_size()
+        self._ready  = threading.Event()
+        self._error: Optional[Exception] = None
 
     def run(self):
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self._sock.bind(('127.0.0.1', self.port))
-        self._sock.listen(5)
+        candidates = [self.port] + list(range(5901, 5910)) + [15900, 25900, 49200]
+        for p in candidates:
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.bind(('127.0.0.1', p))
+                s.listen(5)
+                self._sock = s
+                self.port  = p
+                break
+            except OSError as e:
+                log.warning(f'Port {p} blocked: {e} — trying next')
+                try:
+                    s.close()
+                except Exception:
+                    pass
+        else:
+            self._error = OSError('No available port found in range 5900-5910, 15900, 25900, 49200')
+            self._ready.set()
+            return
+
         log.info(f'VNC server: 127.0.0.1:{self.port}  ({self.width}x{self.height})')
+        self._ready.set()
+
         while self.running:
             try:
                 conn, addr = self._sock.accept()
@@ -302,6 +323,9 @@ class VNCServer(threading.Thread):
                 RFBClient(conn, addr, self).start()
             except OSError:
                 break
+
+    def wait_ready(self, timeout: float = 5.0) -> bool:
+        return self._ready.wait(timeout)
 
     def stop(self):
         self.running = False
@@ -641,7 +665,7 @@ class TrayApp:
 def main():
     parser = argparse.ArgumentParser(description='StarlightRDT Agent')
     parser.add_argument('--relay',    default=RELAY_URL,  help='Relay WebSocket URL')
-    parser.add_argument('--port',     default=VNC_PORT,   type=int, help='Local VNC port')
+    parser.add_argument('--port',     default=VNC_PORT,   type=int, help='Local VNC port (auto-selects if blocked)')
     parser.add_argument('--no-tray',  action='store_true', help='CLI mode, no tray icon')
     args = parser.parse_args()
 
@@ -655,14 +679,26 @@ def main():
         log.error('websockets not installed — cannot connect to relay!')
         log.error('Install with:  pip install websockets')
 
-    cfg   = Config()
-    code  = cfg.get_code()
-    vnc   = VNCServer(port=args.port)
+    cfg = Config()
+    code = cfg.get_code()
+
+    vnc = VNCServer(port=args.port)
+    vnc.start()
+
+    if not vnc.wait_ready(timeout=5.0):
+        log.error('VNC server failed to start within 5 seconds.')
+        return
+
+    if vnc._error:
+        log.error(f'VNC server failed: {vnc._error}')
+        return
+
+    log.info(f'VNC server bound on port {vnc.port}')
+
     tray  = TrayApp(cfg, vnc, None)
-    relay = RelayConnector(args.relay, code, args.port, on_status=tray.set_status)
+    relay = RelayConnector(args.relay, code, vnc.port, on_status=tray.set_status)
     tray.relay = relay
 
-    vnc.start()
     relay.start()
 
     if args.no_tray:
